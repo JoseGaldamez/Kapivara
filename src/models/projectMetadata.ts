@@ -1,5 +1,5 @@
 export interface ProjectMetadata {
-    id: string;
+    uid: string;
     name: string;
     description?: string;
     iconColor: string;

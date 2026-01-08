@@ -1,6 +1,11 @@
 import LogoKapivara from "@/assets/logo-kapivara.png"
 
 export const TopBar = () => {
+
+    const handleLogin = () => {
+        // Implement login logic
+    }
+
     return (
         <div className="w-full h-16 p-4">
             <div className="flex items-center justify-between">
@@ -11,7 +16,7 @@ export const TopBar = () => {
                     </div>
                 </div>
                 <div className="flex items-center">
-                    <button className="bg-[#0E61B1] text-white px-4 py-2 rounded-3xl cursor-pointer hover:bg-[#0E61B1]/80 transition-colors">Login</button>
+                    <button onClick={handleLogin} className="bg-[#0E61B1] text-white px-4 py-2 rounded-3xl cursor-pointer hover:bg-[#0E61B1]/80 transition-colors">Login</button>
                 </div>
             </div>
         </div>

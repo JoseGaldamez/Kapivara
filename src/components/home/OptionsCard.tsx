@@ -4,9 +4,10 @@ import { Download, Trash2 } from "lucide-react";
 interface OptionsCardProps {
     project: ProjectMetadata
     setIsOpen: (isOpen: boolean) => void;
+    deleteThisProject: (project: ProjectMetadata) => void;
 }
 
-export const OptionsCard = ({ project, setIsOpen }: OptionsCardProps) => {
+export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCardProps) => {
     const showAlert = (message: string) => {
         alert(message)
     }
@@ -36,7 +37,7 @@ export const OptionsCard = ({ project, setIsOpen }: OptionsCardProps) => {
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        showAlert("Eliminar proyecto " + project.name);
+                        deleteThisProject(project);
                         setIsOpen(false);
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left cursor-pointer"
