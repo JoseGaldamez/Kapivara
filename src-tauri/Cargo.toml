@@ -1,9 +1,9 @@
 [package]
-name = "kapivara"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+name = "Kapivara"
+version = "0.1.2"
+description = "Gestiona tus APIs para tus proyectos"
+authors = ["José Galdámez <josegaldamez@gmail.com>"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
