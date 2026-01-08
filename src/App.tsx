@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 import { HomePage } from "./pages/HomePage/HomePage";
