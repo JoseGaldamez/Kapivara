@@ -12,13 +12,13 @@ export const TabsHeader = () => {
                     key={tab.id}
                     onClick={() => projectController.selectTab(tab.id)}
                     className={`
-                        flex items-center gap-2 px-3 py-1.5 rounded-t-lg cursor-pointer text-sm min-w-[120px] max-w-[200px] border-b-2
+                        flex items-center gap-2 px-3 py-1.5 rounded-t-lg cursor-pointer text-sm min-w-[120px] max-w-[350px] border-b-2
                         ${activeTabId === tab.id
                             ? "bg-white text-blue-600 border-blue-600 font-medium"
                             : "bg-gray-300 text-gray-600 border-transparent hover:bg-gray-200"}
                     `}
                 >
-                    <span className="truncate flex-1">{tab.title}</span>
+                    <span className="truncate flex-1">{tab.title}</span> { /* TODO: Should I include an icon?  */}
                     {tab.closable && (
                         <button
                             onClick={(e) => {

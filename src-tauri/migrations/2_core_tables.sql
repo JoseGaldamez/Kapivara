@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS environments (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  variables TEXT NOT NULL, -- JSON string
+  variables TEXT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(project_id) REFERENCES projects(uid) ON DELETE CASCADE
 );
@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS collections (
 -- Requests table
 CREATE TABLE IF NOT EXISTS requests (
   id TEXT PRIMARY KEY,
-  collection_id TEXT, -- Can be NULL if at root of project (but better organized in collections)
-  project_id TEXT NOT NULL, -- To easily fetch all requests of a project
+  collection_id TEXT, -- Can be NULL if at root of project
+  project_id TEXT NOT NULL,
   name TEXT NOT NULL,
   method TEXT NOT NULL,
   url TEXT NOT NULL,

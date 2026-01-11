@@ -20,6 +20,7 @@ struct HttpResponse {
     time_ms: u128,
 }
 
+// TODO: should I move this to other file?
 #[tauri::command]
 async fn make_http_request(
     method: String,

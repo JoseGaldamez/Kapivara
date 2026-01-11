@@ -35,7 +35,8 @@ export const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps)
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-800">Create New Project</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 text-gray-500">

@@ -18,7 +18,7 @@ export const ProjectCard = ({ project, deleteThisProject }: ProjectCardProps) =>
             <div className="flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                     <div className="bg-[#0E61B1]/5 rounded-full p-2 w-16 h-16 flex items-center justify-center">
-                        <FolderOpen className="w-10 h-10 text-[#0E61B1]" />
+                        <FolderOpen className={`w-10 h-10 text-[#0E61B1]`} />
                     </div>
 
                     <div className="relative">

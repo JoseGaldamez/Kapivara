@@ -7,7 +7,7 @@ import { Project } from "@/types";
 export const MainLayout = () => {
     const { activeTabId, projects } = useProjectStore();
     const activeTab = useProjectStore((state) =>
-        state.tabs.find((t) => t.id === activeTabId)
+        state.tabs.find((tab) => tab.id === activeTabId)
     );
 
     const getActiveProject = (): Project | null => {

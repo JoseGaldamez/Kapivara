@@ -39,7 +39,10 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
                 </div>
 
                 <p className="text-gray-600 mb-6">
-                    Are you sure you want to delete the project <span className="font-bold text-gray-800">"{projectName}"</span>? This action cannot be undone.
+                    Are you sure you want to delete all the APIs in the project <span className="font-bold text-gray-800">"{projectName}"</span>?
+                </p>
+                <p className="text-red-700 mb-6 bg-red-50 py-2 px-4 rounded-xl">
+                    This action cannot be undone
                 </p>
 
                 <div className="flex items-center justify-end gap-3">

@@ -2,10 +2,12 @@ import { create } from 'zustand';
 import { RequestInfo } from '../types';
 
 interface RequestState {
+    // State
     requests: RequestInfo[]; // We might want to store by project, but for now flat list filtered by current view is simplest or store all loaded. 
     // Optimization: Store a map: { [projectId]: RequestInfo[] }
     requestsByProject: Record<string, RequestInfo[]>;
 
+    // Actions
     setRequests: (projectId: string, requests: RequestInfo[]) => void;
     addRequest: (request: RequestInfo) => void;
     updateRequest: (request: Partial<RequestInfo> & { id: string; project_id: string }) => void;
@@ -13,7 +15,7 @@ interface RequestState {
 
 export const useRequestStore = create<RequestState>((set) => ({
     requestsByProject: {},
-    requests: [], // Legacy/Simpler single view if needed, but lets use requestsByProject
+    requests: [],
 
     setRequests: (projectId, requests) => set((state) => ({
         requestsByProject: {

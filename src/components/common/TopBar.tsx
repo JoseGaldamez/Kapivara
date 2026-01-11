@@ -3,7 +3,7 @@ import LogoKapivara from "@/assets/logo-kapivara.png"
 export const TopBar = () => {
 
     const handleLogin = () => {
-        // Implement login logic
+        // TODO: Implement login logic
     }
 
     return (

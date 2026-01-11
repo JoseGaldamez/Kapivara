@@ -25,7 +25,7 @@ export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCa
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        showAlert("Exportar proyecto " + project.name);
+                        showAlert(`Export project ${project.name} not implemented yet`);
                         setIsOpen(false);
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-[#0E61B1]/5 hover:text-[#0E61B1] transition-colors text-left cursor-pointer"

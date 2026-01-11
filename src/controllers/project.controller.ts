@@ -1,21 +1,21 @@
-import DBService from '../services/db.service';
 import { useProjectStore } from '../stores/project.store';
+import ProjectService from '../services/projects.service';
 import { Project } from '../types';
 
 class ProjectController {
-    private db: DBService | null = null;
+    private service: ProjectService | null = null;
 
-    private async getDB() {
-        if (!this.db) {
-            this.db = await DBService.getInstance();
+    private async getService() {
+        if (!this.service) {
+            this.service = await ProjectService.getInstance();
         }
-        return this.db;
+        return this.service;
     }
 
     public async loadProjects() {
         try {
-            const db = await this.getDB();
-            const projects = await db.getProjects();
+            const service = await this.getService();
+            const projects = await service.getProjects();
             useProjectStore.getState().setProjects(projects);
         } catch (error) {
             console.error('Failed to load projects:', error);
@@ -24,7 +24,7 @@ class ProjectController {
 
     public async createNewProject(name: string, description: string, iconColor: string) {
         try {
-            const db = await this.getDB();
+            const service = await this.getService();
 
             const newProject: Project = {
                 uid: crypto.randomUUID(),
@@ -34,7 +34,7 @@ class ProjectController {
                 lastOpenAt: new Date().toISOString()
             };
 
-            await db.createProject(newProject);
+            await service.createProject(newProject);
             useProjectStore.getState().addProject(newProject);
             return newProject;
         } catch (error) {
@@ -46,8 +46,8 @@ class ProjectController {
 
     public async deleteProject(projectId: string) {
         try {
-            const db = await this.getDB();
-            await db.deleteProject(projectId);
+            const service = await this.getService();
+            await service.deleteProject(projectId);
             useProjectStore.getState().removeProject(projectId);
             this.loadProjects();
         } catch (error) {

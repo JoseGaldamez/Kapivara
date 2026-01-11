@@ -10,6 +10,7 @@ export interface Tab {
 }
 
 interface ProjectState {
+    // State
     projects: Project[];
     tabs: Tab[];
     activeTabId: string;

@@ -1,35 +1,46 @@
-import { Collection, RequestInfo } from "@/types";
-import { FolderPlus, FilePlus, Search } from "lucide-react";
 import { useState, useEffect } from "react";
-import { CreateRequestModal } from "./CreateRequestModal";
-import { METHODS_COLORS } from "@/utils/methods.constants";
-import { requestController } from "@/controllers/request.controller";
 import { useRequestStore } from "@/stores/request.store";
+import { FolderPlus, FilePlus, Search } from "lucide-react";
+
+import { RequestInfo } from "@/types";
+
+// Utils
+import { METHODS_COLORS } from "@/utils/methods.constants";
+
+// Controllers
+import { requestController } from "@/controllers/request.controller";
+
+// Modals
+import { CreateRequestModal } from "../modals/CreateRequestModal";
 
 interface SidebarProps {
     projectId: string;
+    activeRequestId: string | null;
     onSelectRequest: (request: RequestInfo) => void;
 }
 
 const EMPTY_ARRAY: RequestInfo[] = [];
 
-export const Sidebar = ({ projectId, onSelectRequest }: SidebarProps) => {
-    // These states ideally come from a store or a fetch hook
+export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: SidebarProps) => {
+
     const [searchTerm, setSearchTerm] = useState("");
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Subscribe to store
     const requests = useRequestStore((state) => state.requestsByProject[projectId] ?? EMPTY_ARRAY);
 
 
     useEffect(() => {
-        const loadData = async () => {
-            if (projectId) {
-                await requestController.getRequests(projectId);
-            }
-        };
         loadData();
     }, [projectId]);
+
+
+    // TODO: Get requests, environment variables, etc
+    const loadData = async () => {
+        if (projectId) {
+            await requestController.getRequests(projectId);
+        }
+    };
+
 
     const handleCreateRequest = async (name: string, method: string) => {
         try {
@@ -40,9 +51,19 @@ export const Sidebar = ({ projectId, onSelectRequest }: SidebarProps) => {
         }
     };
 
+
+    const getMethodColor = (method: string) => {
+        return METHODS_COLORS[method as keyof typeof METHODS_COLORS];
+    };
+
+    const getRequestSelected = (request: RequestInfo) => {
+        if (!activeRequestId || !request.id || request.id !== activeRequestId) return "";
+        return "bg-blue-100 text-gray-700 font-bold";
+    };
+
     return (
         <div className="w-64 flex flex-col h-full bg-gray-50 border-r border-gray-200">
-            {/* Search and Add Actions */}
+
             <div className="p-3 border-b border-gray-200">
                 <div className="flex gap-2 mb-2">
                     <button
@@ -67,7 +88,8 @@ export const Sidebar = ({ projectId, onSelectRequest }: SidebarProps) => {
                 </div>
             </div>
 
-            {/* Tree View */}
+
+            {/* TODO: Tree View when folders are implemented */}
             <div className="flex-1 overflow-y-auto p-2">
                 {requests.length === 0 ? (
                     <div className="text-xs text-gray-500 text-center mt-4">
@@ -79,9 +101,9 @@ export const Sidebar = ({ projectId, onSelectRequest }: SidebarProps) => {
                             <div
                                 key={req.id}
                                 onClick={() => onSelectRequest(req)}
-                                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700"
+                                className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700 ${getRequestSelected(req)}`}
                             >
-                                <span className={`text-[10px] font-bold w-8 ${METHODS_COLORS[req.method as keyof typeof METHODS_COLORS]}`}>{req.method}</span>
+                                <span className={`text-[10px] font-bold w-8 ${getMethodColor(req.method)}`}>{req.method}</span>
                                 <span className="truncate">{req.name}</span>
                             </div>
                         ))}

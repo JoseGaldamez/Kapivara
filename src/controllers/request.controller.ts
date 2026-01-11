@@ -57,17 +57,20 @@ class RequestController {
 
     public async executeRequest(request: RequestInfo): Promise<RequestResponse> {
         try {
+            // TODO: Get environment variables and set headers, body, etc
             const response = await invoke<RequestResponse>('make_http_request', {
                 method: request.method,
                 url: request.url,
-                headers: {}, // Parsing logic will go here
-                body: null   // Parsing logic will go here
+                headers: {},
+                body: null
             });
 
-            // Save response to store (client-side only for now)
+            // Save response to store. TODO: Should it be saved on the database? 
             useRequestStore.getState().updateRequest({
                 id: request.id,
                 project_id: request.project_id,
+                url: request.url,
+                method: request.method,
                 response: response
             });
 

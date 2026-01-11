@@ -1,12 +1,14 @@
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
+import { useProjectStore } from "@/stores/project.store"
+import { Project } from "@/types"
+
+// Constrollers
+import { projectController } from "@/controllers/project.controller"
+
+// Components
 import { NewProjectCard } from "./NewProjectCard"
 import { ProjectCard } from "./ProjectCard"
-import { useProjectStore } from "@/stores/project.store"
-import { projectController } from "@/controllers/project.controller"
-import { Project } from "@/types"
-import { useState } from "react"
-import { CreateProjectModal } from "./CreateProjectModal"
-import { DeleteProjectModal } from "./DeleteProjectModal"
+import { CreateProjectModal, DeleteProjectModal } from "../modals"
 
 export const ContainerListProjects = () => {
     const projects = useProjectStore((state) => state.projects);
@@ -32,6 +34,7 @@ export const ContainerListProjects = () => {
         if (projectToDelete) {
             await projectController.deleteProject(projectToDelete.uid);
             setIsDeleteModalOpen(false);
+            setProjectToDelete(null);
         }
     }
 

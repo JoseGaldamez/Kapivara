@@ -56,8 +56,7 @@ class RequestService {
             fields.push(`url = $${index++}`);
             values.push(request.url);
         }
-        // Add other fields as needed
-
+        // TODO: Add other fields as needed
         if (fields.length === 0) return;
 
         values.push(request.id);

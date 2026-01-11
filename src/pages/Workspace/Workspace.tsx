@@ -21,8 +21,10 @@ export const Workspace = ({ project }: WorkspaceProps) => {
 
     return (
         <div className="flex h-full">
+
             <Sidebar
                 projectId={project.uid}
+                activeRequestId={activeRequestId}
                 onSelectRequest={(req) => setActiveRequestId(req.id)}
             />
             <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
