@@ -1,6 +1,6 @@
 # Kapivara
 
-![Kapivara Logo](public/logo.png)
+![Kapivara Logo](public/logo_medium.png)
 
 **A modern, high-performance desktop application built for efficiency.**
 
