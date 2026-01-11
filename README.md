@@ -24,7 +24,7 @@ This project is built using a modern technology stack to ensure performance and 
 *   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 *   [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 *   [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white)](https://github.com/pmndrs/zustand)
-*   **Vite**
+*   [![Vite](https://img.shields.io/badge/Vite-000000?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
 
 ## 📦 Version AND Status
 
@@ -77,4 +77,13 @@ See `LICENSE` for more information.
 
 **Jose Galdamez** - [GitHub Profile](https://github.com/JoseGaldamez)
 
+**Email:** [contacto@josegaldamez.dev](mailto:contacto@josegaldamez.dev)
+
+**Website:** [josegaldamez.dev](https://josegaldamez.dev)
+
+**LinkedIn:** [LinkedIn Profile](https://www.linkedin.com/in/josegaldamezdev)
+
+**X:** [X Profile](https://x.com/josegaldamezdev)
+
 Project Link: [https://github.com/JoseGaldamez/Kapivara](https://github.com/JoseGaldamez/Kapivara)
+
