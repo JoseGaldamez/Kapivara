@@ -4,7 +4,7 @@
 
 **A modern, high-performance desktop application built for efficiency.**
 
-[Explore the docs](#getting-started) · [Report Bug](https://github.com/JoseGaldamez/Kapivara/issues) · [Request Feature](https://github.com/JoseGaldamez/Kapivara/issues)
+[Explore the docs](#getting-started) · <a href="https://github.com/JoseGaldamez/Kapivara/issues" target="_blank">Report Bug</a> · <a href="https://github.com/JoseGaldamez/Kapivara/issues" target="_blank">Request Feature</a>
 
 ---
 
@@ -18,13 +18,13 @@ While many desktop applications are bloated and slow, Kapivara focuses on speed,
 
 This project is built using a modern technology stack to ensure performance and maintainability:
 
-*   [![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
-*   [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-*   [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-*   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-*   [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-*   [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white)](https://github.com/pmndrs/zustand)
-*   [![Vite](https://img.shields.io/badge/Vite-000000?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+*   <a href="https://tauri.app/" target="_blank"><img src="https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri"></a>
+*   <a href="https://www.rust-lang.org/" target="_blank"><img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust"></a>
+*   <a href="https://reactjs.org/" target="_blank"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"></a>
+*   <a href="https://www.typescriptlang.org/" target="_blank"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
+*   <a href="https://tailwindcss.com/" target="_blank"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS"></a>
+*   <a href="https://github.com/pmndrs/zustand" target="_blank"><img src="https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white" alt="Zustand"></a>
+*   <a href="https://vite.dev/" target="_blank"><img src="https://img.shields.io/badge/Vite-000000?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"></a>
 
 ## 📦 Version AND Status
 
@@ -75,15 +75,14 @@ See `LICENSE` for more information.
 
 ## 👤 Contact
 
-**Jose Galdamez** - [GitHub Profile](https://github.com/JoseGaldamez)
+**Jose Galdamez** - <a href="https://github.com/JoseGaldamez" target="_blank">GitHub Profile</a>
 
 **Email:** [contacto@josegaldamez.dev](mailto:contacto@josegaldamez.dev)
 
-**Website:** [josegaldamez.dev](https://josegaldamez.dev)
+**Website:** <a href="https://josegaldamez.dev" target="_blank">josegaldamez.dev</a>
 
-**LinkedIn:** [LinkedIn Profile](https://www.linkedin.com/in/josegaldamezdev)
+**LinkedIn:** <a href="https://www.linkedin.com/in/josegaldamezdev" target="_blank">LinkedIn Profile</a>
 
-**X:** [X Profile](https://x.com/josegaldamezdev)
+**X:** <a href="https://x.com/josegaldamezdev" target="_blank">X Profile</a>
 
-Project Link: [https://github.com/JoseGaldamez/Kapivara](https://github.com/JoseGaldamez/Kapivara)
-
+Project Link: <a href="https://github.com/JoseGaldamez/Kapivara" target="_blank">https://github.com/JoseGaldamez/Kapivara</a>
