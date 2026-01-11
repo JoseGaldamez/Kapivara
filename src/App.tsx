@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-import { HomePage } from "./pages/HomePage/HomePage";
+import { MainLayout } from "./layouts/MainLayout";
 
 
 function App() {
@@ -12,9 +12,7 @@ function App() {
   }, []);
 
   return (
-    <main className="bg-[#e4e8f1b7] w-full h-screen">
-      <HomePage />
-    </main>
+    <MainLayout />
   );
 }
 

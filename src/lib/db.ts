@@ -23,7 +23,7 @@ export const createProject = async (project: ProjectMetadata) => {
     await db.execute(
         'INSERT INTO projects (uid, name, description, iconColor, lastOpenAt, created_at) VALUES ($1, $2, $3, $4, $5, $6)',
         [
-            project.id,
+            project.uid,
             project.name,
             project.description,
             project.iconColor,
@@ -38,7 +38,7 @@ export const getProjects = async (): Promise<ProjectMetadata[]> => {
     const result = await db.select<any[]>('SELECT * FROM projects ORDER BY lastOpenAt DESC');
 
     return result.map((row) => ({
-        id: row.uid,
+        uid: row.uid,
         name: row.name,
         description: row.description,
         iconColor: row.iconColor,

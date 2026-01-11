@@ -1,13 +1,13 @@
 import KapivaraCardIcon from "@/assets/kapivara-card.png"
-import { ProjectMetadata } from "@/models/projectMetadata"
+import { Project } from "@/types"
 import { EllipsisVertical, FolderOpen } from "lucide-react"
 import { useState } from "react"
 import { OptionsCard } from "./OptionsCard"
 
 
 interface ProjectCardProps {
-    project: ProjectMetadata,
-    deleteThisProject: (project: ProjectMetadata) => void
+    project: Project,
+    deleteThisProject: (project: Project) => void
 }
 
 export const ProjectCard = ({ project, deleteThisProject }: ProjectCardProps) => {

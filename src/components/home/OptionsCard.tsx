@@ -1,10 +1,10 @@
-import { ProjectMetadata } from "@/models/projectMetadata"
+import { Project } from "@/types"
 import { Download, Trash2 } from "lucide-react";
 
 interface OptionsCardProps {
-    project: ProjectMetadata
+    project: Project
     setIsOpen: (isOpen: boolean) => void;
-    deleteThisProject: (project: ProjectMetadata) => void;
+    deleteThisProject: (project: Project) => void;
 }
 
 export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCardProps) => {
