@@ -4,6 +4,8 @@
 
 **A modern, high-performance desktop application built for efficiency.**
 
+[![Download Now](https://img.shields.io/badge/Download_Now-www.kapivara.dev-2ea44f?style=for-the-badge)](https://www.kapivara.dev/)
+
 [Explore the docs](#getting-started) · [Report Bug](https://github.com/JoseGaldamez/Kapivara/issues) · [Request Feature](https://github.com/JoseGaldamez/Kapivara/issues)
 
 ---
