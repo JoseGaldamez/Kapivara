@@ -39,12 +39,12 @@ export const ContainerListProjects = () => {
     }
 
     return (
-        <div className='m-4 p-4 bg-[#F9FAFC] rounded-3xl h-[calc(100vh-8rem)]'>
+        <div className='m-4 p-4 bg-[#F9FAFC] rounded-3xl h-[calc(100vh-10rem)]'>
             <div className="pb-8">
                 <h1 className="text-2xl font-bold text-gray-800">Your projects</h1>
                 <p className="text-gray-500">Manage your projects</p>
             </div>
-            <div className="flex flex-wrap gap-4 flex-1 h-[calc(100vh-15rem)] overflow-y-auto">
+            <div className="flex flex-wrap gap-4 flex-1 h-[calc(100vh-17rem)] overflow-y-auto">
                 <NewProjectCard onClick={() => setIsModalOpen(true)} />
                 {projects.map((project) => (
                     <div key={project.uid} onClick={() => handleOpenProject(project)}>
