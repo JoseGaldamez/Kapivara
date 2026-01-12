@@ -6,7 +6,7 @@ export const TabsHeader = () => {
     const { tabs, activeTabId } = useProjectStore();
 
     return (
-        <div className="flex items-center gap-1 overflow-x-auto bg-gray-200 p-1 h-10 select-none">
+        <div className="flex items-center gap-1 overflow-y-hidden overflow-x-auto bg-gray-200 p-1 h-10 select-none">
             {tabs.map((tab) => (
                 <div
                     key={tab.id}
