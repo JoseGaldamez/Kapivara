@@ -1,5 +1,6 @@
 import { Project } from "@/types"
 import { Download, Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface OptionsCardProps {
     project: Project
@@ -8,8 +9,10 @@ interface OptionsCardProps {
 }
 
 export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCardProps) => {
-    const showAlert = (message: string) => {
-        alert(message)
+
+
+    const handleExport = () => {
+        toast.success(`Export project ${project.name} not implemented yet`);
     }
 
     return (
@@ -25,7 +28,7 @@ export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCa
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        showAlert(`Export project ${project.name} not implemented yet`);
+                        handleExport();
                         setIsOpen(false);
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-[#0E61B1]/5 hover:text-[#0E61B1] transition-colors text-left cursor-pointer"

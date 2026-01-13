@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { RequestInfo } from '../types';
 
+//TODO: Should we store metadata like active tab, height of response panel, response time, etc?
 interface RequestState {
     // State
-    requests: RequestInfo[]; // We might want to store by project, but for now flat list filtered by current view is simplest or store all loaded. 
-    // Optimization: Store a map: { [projectId]: RequestInfo[] }
+    requests: RequestInfo[];
     requestsByProject: Record<string, RequestInfo[]>;
 
     // Actions

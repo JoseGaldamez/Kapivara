@@ -62,7 +62,7 @@ class RequestController {
                 method: request.method,
                 url: request.url,
                 headers: {},
-                body: null
+                body: request.body || null
             });
 
             // Save response to store. TODO: Should it be saved on the database? 
@@ -71,7 +71,9 @@ class RequestController {
                 project_id: request.project_id,
                 url: request.url,
                 method: request.method,
-                response: response
+                response: response,
+                body_type: request.body_type,
+                body: request.body
             });
 
             return response;

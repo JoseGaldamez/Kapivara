@@ -7,14 +7,15 @@ import { OptionsCard } from "./OptionsCard"
 
 interface ProjectCardProps {
     project: Project,
-    deleteThisProject: (project: Project) => void
+    deleteThisProject: (project: Project) => void,
+    onClick: (project: Project) => void
 }
 
-export const ProjectCard = ({ project, deleteThisProject }: ProjectCardProps) => {
+export const ProjectCard = ({ project, deleteThisProject, onClick }: ProjectCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="flex flex-col justify-between w-80 min-w-80 h-64 min-h-64 bg-[#0E61B1]/5 rounded-3xl p-4 cursor-pointer hover:bg-[#0E61B1]/10 transition-colors border border-[#0E61B1]/10 relative">
+        <div onClick={() => onClick(project)} className="flex flex-col justify-between w-80 min-w-80 h-64 min-h-64 bg-[#0E61B1]/5 rounded-3xl p-4 cursor-pointer hover:bg-[#0E61B1]/10 transition-colors border border-[#0E61B1]/10 relative">
             <div className="flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                     <div className="bg-[#0E61B1]/5 rounded-full p-2 w-16 h-16 flex items-center justify-center">

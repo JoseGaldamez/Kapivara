@@ -40,6 +40,7 @@ export interface RequestInfo {
     url: string;
     headers?: string; // JSON string
     body?: string;
+    body_type?: 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
     auth?: string; // JSON string
     params?: string; // JSON string
     response?: RequestResponse | null;

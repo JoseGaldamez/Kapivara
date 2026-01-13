@@ -25,9 +25,9 @@ const JsonNode = ({ name, value, isLast = true }: { name?: string, value: any, i
 
         return (
             <div className="font-mono text-sm leading-6">
-                <div className="flex items-start hover:bg-gray-50 cursor-pointer select-none" onClick={toggle}>
+                <div className="flex items-start hover:bg-gray-50" >
                     <span className="mr-1 mt-1 text-gray-400">
-                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {isExpanded ? <ChevronDown size={14} onClick={toggle} className="cursor-pointer" /> : <ChevronRight size={14} onClick={toggle} className="cursor-pointer" />}
                     </span>
                     <span className="mr-1">
                         {name && <span className="text-purple-600 font-semibold">"{name}": </span>}

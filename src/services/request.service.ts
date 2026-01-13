@@ -17,7 +17,13 @@ class RequestService {
 
     public async getRequests(projectId: string): Promise<RequestInfo[]> {
         if (!this.dbService) this.dbService = await DBService.getInstance();
-        return await this.dbService.select<RequestInfo[]>('SELECT * FROM requests WHERE project_id = $1', [projectId]);
+        const query = `
+            SELECT r.*, rb.body_type, rb.raw_data as body 
+            FROM requests r 
+            LEFT JOIN request_body rb ON r.id = rb.request_id 
+            WHERE r.project_id = $1
+        `;
+        return await this.dbService.select<RequestInfo[]>(query, [projectId]);
     }
 
     public async createRequest(request: RequestInfo): Promise<void> {
@@ -33,6 +39,17 @@ class RequestService {
             request.name,
             request.method,
             request.url
+        ]);
+
+        const bodyQuery = `
+            INSERT INTO request_body (id, request_id, body_type, raw_data)
+            VALUES ($1, $2, $3, $4)
+        `;
+        await this.dbService.execute(bodyQuery, [
+            crypto.randomUUID(),
+            request.id,
+            request.body_type || 'none',
+            request.body || null
         ]);
     }
 
@@ -56,13 +73,50 @@ class RequestService {
             fields.push(`url = $${index++}`);
             values.push(request.url);
         }
-        // TODO: Add other fields as needed
-        if (fields.length === 0) return;
+        // Update requests table if needed
+        if (fields.length > 0) {
+            values.push(request.id);
+            const query = `UPDATE requests SET ${fields.join(', ')} WHERE id = $${index}`;
+            await this.dbService.execute(query, values);
+        }
 
-        values.push(request.id);
-        const query = `UPDATE requests SET ${fields.join(', ')} WHERE id = $${index}`;
+        // Handle Body updates
+        if (request.body !== undefined || request.body_type !== undefined) {
+            // Check if exists
+            const existing = await this.dbService.select<any[]>('SELECT id FROM request_body WHERE request_id = $1', [request.id]);
 
-        await this.dbService.execute(query, values);
+            if (existing && existing.length > 0) {
+                // Update
+                const bodyFields: string[] = [];
+                const bodyValues: any[] = [];
+                let bodyIndex = 1;
+
+                if (request.body !== undefined) {
+                    bodyFields.push(`raw_data = $${bodyIndex++}`);
+                    bodyValues.push(request.body);
+                }
+                if (request.body_type !== undefined) {
+                    bodyFields.push(`body_type = $${bodyIndex++}`);
+                    bodyValues.push(request.body_type);
+                }
+
+                bodyValues.push(request.id);
+                const bodyQuery = `UPDATE request_body SET ${bodyFields.join(', ')} WHERE request_id = $${bodyIndex}`;
+                await this.dbService.execute(bodyQuery, bodyValues);
+            } else {
+                // Insert
+                const insertQuery = `
+                    INSERT INTO request_body (id, request_id, body_type, raw_data)
+                    VALUES ($1, $2, $3, $4)
+                `;
+                await this.dbService.execute(insertQuery, [
+                    crypto.randomUUID(),
+                    request.id,
+                    request.body_type || 'none',
+                    request.body || null
+                ]);
+            }
+        }
     }
 }
 
