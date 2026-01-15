@@ -22,6 +22,9 @@ interface ProjectState {
     closeTab: (tabId: string) => void;
     setActiveTab: (tabId: string) => void;
     removeProject: (projectId: string) => void;
+
+    isSettingsOpen: boolean;
+    setSettingsOpen: (isOpen: boolean) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -75,5 +78,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         set({ tabs: newTabs, activeTabId: newActiveId });
     },
 
-    setActiveTab: (tabId) => set({ activeTabId: tabId })
+    setActiveTab: (tabId) => set({ activeTabId: tabId }),
+
+    isSettingsOpen: false,
+    setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen })
 }));

@@ -106,7 +106,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     }, [handleSave]);
 
     return (
-        <div className="flex flex-col h-full bg-white relative">
+        <div className="flex flex-col h-full bg-white dark:bg-gray-900 relative transition-colors">
 
             <FormRequestSection
                 method={method}
@@ -135,13 +135,13 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
             <div
                 onMouseDown={() => setIsDragging(true)}
-                className={`h-1 cursor-row-resize bg-gray-200 hover:bg-[#0E61B1] transition-colors ${isDragging ? 'bg-[#0E61B1]' : ''}`}
+                className={`h-1 cursor-row-resize bg-gray-200 dark:bg-gray-800 hover:bg-[#0E61B1] transition-colors ${isDragging ? 'bg-[#0E61B1]' : ''}`}
             />
 
 
             <div
                 style={{ height: responseHeight }}
-                className="border-t border-gray-200 bg-gray-50 flex flex-col"
+                className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-black/20 flex flex-col"
             >
                 <ResponseStatusBar request={request} />
                 <div className="flex-1 overflow-auto font-mono text-sm">

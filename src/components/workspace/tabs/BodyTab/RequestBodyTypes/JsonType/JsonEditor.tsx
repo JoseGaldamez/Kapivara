@@ -90,31 +90,31 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
-                let cls = 'text-blue-600'; // number
+                let cls = 'text-blue-600 dark:text-blue-400'; // number
                 if (/^"/.test(match)) {
                     if (/:$/.test(match)) {
-                        cls = 'text-purple-600 font-semibold'; // key
+                        cls = 'text-purple-600 dark:text-purple-400 font-semibold'; // key
                     } else {
-                        cls = 'text-green-600'; // string
+                        cls = 'text-green-600 dark:text-green-400'; // string
                     }
                 } else if (/true|false/.test(match)) {
-                    cls = 'text-orange-600 font-bold'; // boolean
+                    cls = 'text-orange-600 dark:text-orange-400 font-bold'; // boolean
                 } else if (/null/.test(match)) {
-                    cls = 'text-gray-500 italic'; // null
+                    cls = 'text-gray-500 dark:text-gray-400 italic'; // null
                 }
                 return `<span class="${cls}">${match}</span>`;
             });
     };
 
     const getBorderColor = () => {
-        return isValidJson ? 'border-gray-300' : 'border-red-500';
+        return isValidJson ? 'border-gray-300 dark:border-gray-700' : 'border-red-500';
     };
 
     return (
-        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor()} rounded overflow-hidden`}>
+        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor()} rounded overflow-hidden bg-gray-50 dark:bg-gray-900`}>
             <pre
                 ref={preRef}
-                className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none overflow-hidden whitespace-pre"
+                className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none select-none overflow-hidden whitespace-pre text-gray-800 dark:text-gray-200"
                 dangerouslySetInnerHTML={{ __html: highlight(value) + '<br>' }}
                 style={{ fontFamily: 'monospace' }}
             />
@@ -124,7 +124,7 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 onScroll={handleScroll}
-                className="absolute top-0 left-0 w-full h-full p-2 m-0 bg-transparent text-transparent caret-black outline-none resize-none whitespace-pre overflow-auto"
+                className="absolute top-0 left-0 w-full h-full p-2 m-0 text-transparent caret-black dark:caret-white outline-none resize-none whitespace-pre overflow-auto"
                 spellCheck={false}
                 autoCapitalize="off"
                 autoComplete="off"

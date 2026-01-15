@@ -24,7 +24,7 @@ export const MainLayout = () => {
             <TabsHeader />
             <div className="flex-1 overflow-hidden relative">
                 <div
-                    className="absolute inset-0 bg-[#e4e8f1b7]"
+                    className="absolute inset-0 bg-[#e4e8f1b7] dark:bg-gray-800"
                     style={{ visibility: activeTabId === 'home' ? 'visible' : 'hidden' }}
                 >
                     <HomePage />
@@ -35,6 +35,7 @@ export const MainLayout = () => {
                         <Workspace key={project.uid} project={project} />
                     </div>
                 )}
+
             </div>
         </div>
     );

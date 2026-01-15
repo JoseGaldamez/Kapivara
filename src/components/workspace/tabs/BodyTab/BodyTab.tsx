@@ -36,7 +36,7 @@ export const BodyTab = ({ body, setBody, bodyType, setBodyType }: BodyTabProps) 
                             onChange={() => setBodyType(type.id)}
                             className="text-[#0E61B1] focus:ring-[#0E61B1]"
                         />
-                        <span className={`${bodyType === type.id ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        <span className={`${bodyType === type.id ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                             {type.label}
                         </span>
                     </label>

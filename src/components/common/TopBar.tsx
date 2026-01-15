@@ -5,13 +5,14 @@ import { toast } from "react-toastify"
 interface TopBarProps {
     searchTerm?: string;
     onSearchChange?: (term: string) => void;
+    onOpenSettings: () => void;
 }
 
-export const TopBar = ({ searchTerm = "", onSearchChange }: TopBarProps) => {
+export const TopBar = ({ searchTerm = "", onSearchChange, onOpenSettings }: TopBarProps) => {
 
-    const handleSettings = (action: string) => {
-        // TODO: Implement settings logic
-        toast.info(`${action} not implemented yet`);
+
+    const handleUser = () => {
+        toast.info(`User not implemented yet`);
     }
 
     return (
@@ -23,7 +24,7 @@ export const TopBar = ({ searchTerm = "", onSearchChange }: TopBarProps) => {
                         <input
                             type="text"
                             placeholder="Search project"
-                            className="border border-gray-300 bg-white rounded-3xl pl-4 pr-10 py-2 w-96 outline-none focus:border-blue-500 transition-colors"
+                            className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-3xl pl-4 pr-10 py-2 w-96 outline-none focus:border-blue-500 dark:text-white transition-colors"
                             value={searchTerm}
                             onChange={(e) => onSearchChange?.(e.target.value)}
                         />
@@ -38,10 +39,10 @@ export const TopBar = ({ searchTerm = "", onSearchChange }: TopBarProps) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button onClick={() => { handleSettings("Settings") }} className="bg-gray-50 text-gray-600 p-2 rounded-full cursor-pointer hover:bg-gray-200 transition-colors">
+                    <button onClick={onOpenSettings} className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 p-2 rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                         <Settings size={24} />
                     </button>
-                    <button onClick={() => { handleSettings("User") }} className="bg-gray-50 text-gray-600 p-2 rounded-full cursor-pointer hover:bg-gray-200 transition-colors">
+                    <button onClick={handleUser} className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 p-2 rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                         <User size={24} />
                     </button>
                 </div>

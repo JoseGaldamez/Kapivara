@@ -12,6 +12,7 @@ import { requestController } from "@/controllers/request.controller";
 
 // Modals
 import { CreateRequestModal } from "../modals/CreateRequestModal";
+import { toast } from "react-toastify";
 
 interface SidebarProps {
     projectId: string;
@@ -51,6 +52,14 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
         }
     };
 
+    const handleCreateFolder = async () => {
+        try {
+            toast.info("Folder not implemented yet");
+        } catch (error) {
+            console.error("Error creating folder", error);
+        }
+    };
+
 
     const getMethodColor = (method: string) => {
         return METHODS_COLORS[method as keyof typeof METHODS_COLORS];
@@ -58,13 +67,13 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
 
     const getRequestSelected = (request: RequestInfo) => {
         if (!activeRequestId || !request.id || request.id !== activeRequestId) return "";
-        return "bg-blue-100 text-gray-700 font-bold";
+        return "bg-blue-200 dark:bg-blue-950 text-gray-800 dark:text-gray-200 font-bold";
     };
 
     return (
-        <div className="w-64 flex flex-col h-full bg-gray-50 border-r border-gray-200">
+        <div className="w-64 flex flex-col h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-colors">
 
-            <div className="p-3 border-b border-gray-200">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex gap-2 mb-2">
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
@@ -72,7 +81,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                     >
                         <FilePlus size={14} /> New Request
                     </button>
-                    <button className="p-1.5 text-gray-600 hover:bg-gray-200 rounded-lg" title="New Folder">
+                    <button onClick={handleCreateFolder} className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg" title="New Folder">
                         <FolderPlus size={16} />
                     </button>
                 </div>
@@ -83,7 +92,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                         placeholder="Filter..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-[#0E61B1]"
+                        className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-[#0E61B1] dark:text-gray-200"
                     />
                 </div>
             </div>
@@ -92,7 +101,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
             {/* TODO: Tree View when folders are implemented */}
             <div className="flex-1 overflow-y-auto p-2">
                 {requests.length === 0 ? (
-                    <div className="text-xs text-gray-500 text-center mt-4">
+                    <div className="text-xs text-gray-500 dark:text-gray-500 text-center mt-4">
                         No requests yet. <br /> Create one to get started!
                     </div>
                 ) : (
@@ -101,7 +110,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                             <div
                                 key={req.id}
                                 onClick={() => onSelectRequest(req)}
-                                className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 cursor-pointer text-sm text-gray-700 ${getRequestSelected(req)}`}
+                                className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer text-sm text-gray-700 dark:text-gray-300 ${getRequestSelected(req)}`}
                             >
                                 <span className={`text-[10px] font-bold w-8 ${getMethodColor(req.method)}`}>{req.method}</span>
                                 <span className="truncate">{req.name}</span>

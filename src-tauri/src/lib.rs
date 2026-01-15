@@ -102,6 +102,12 @@ pub fn run() {
                             sql: include_str!("../migrations/2_core_tables.sql"),
                             kind: tauri_plugin_sql::MigrationKind::Up,
                         },
+                        tauri_plugin_sql::Migration {
+                            version: 3,
+                            description: "create_settings_table",
+                            sql: include_str!("../migrations/3_settings_table.sql"),
+                            kind: tauri_plugin_sql::MigrationKind::Up,
+                        },
                     ],
                 )
                 .build(),

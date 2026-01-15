@@ -27,11 +27,11 @@ export const Workspace = ({ project }: WorkspaceProps) => {
                 activeRequestId={activeRequestId}
                 onSelectRequest={(req) => setActiveRequestId(req.id)}
             />
-            <div className="flex-1 bg-white flex flex-col h-full overflow-hidden">
+            <div className="flex-1 bg-white dark:bg-gray-900 flex flex-col h-full overflow-hidden transition-colors">
                 {activeRequest ? (
                     <RequestPanel key={activeRequest.id} request={activeRequest} />
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-600">
                         Select a request to start
                     </div>
                 )}

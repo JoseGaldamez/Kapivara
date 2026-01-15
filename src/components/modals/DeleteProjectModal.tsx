@@ -27,21 +27,21 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                         <AlertTriangle className="text-red-500" />
                         Delete Project
                     </h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 text-gray-500">
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                <p className="text-gray-600 mb-6">
-                    Are you sure you want to delete all the APIs in the project <span className="font-bold text-gray-800">"{projectName}"</span>?
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    Are you sure you want to delete all the APIs in the project <span className="font-bold text-gray-800 dark:text-white">"{projectName}"</span>?
                 </p>
-                <p className="text-red-700 mb-6 bg-red-50 py-2 px-4 rounded-xl">
+                <p className="text-red-700 dark:text-red-400 mb-6 bg-red-50 dark:bg-red-900/20 py-2 px-4 rounded-xl">
                     This action cannot be undone
                 </p>
 
@@ -49,7 +49,7 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors"
+                        className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors cursor-pointer"
                         disabled={isLoading}
                     >
                         Cancel
@@ -58,7 +58,7 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
                         type="button"
                         onClick={handleConfirm}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                     >
                         {isLoading ? "Deleting..." : "Delete Project"}
                     </button>

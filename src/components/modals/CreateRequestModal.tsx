@@ -35,17 +35,17 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestM
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-800">Create New Request</h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 text-gray-500">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create New Request</h2>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label htmlFor="req-name" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="req-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Request Name <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -53,14 +53,14 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestM
                             id="req-name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-900 dark:text-white"
                             placeholder="e.g. Get User Profile"
                             autoFocus
                         />
                     </div>
 
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Method
                         </label>
                         <div className="grid grid-cols-4 gap-2">
@@ -69,9 +69,9 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestM
                                     key={m}
                                     type="button"
                                     onClick={() => setMethod(m)}
-                                    className={`px-2 py-1.5 text-xs font-bold rounded-lg border transition-all ${method === m
-                                            ? "bg-blue-50 border-blue-500 text-blue-600 ring-1 ring-blue-500"
-                                            : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                                    className={`px-2 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${method === m
+                                        ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-500 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500"
+                                        : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500"
                                         }`}
                                 >
                                     {m}
@@ -84,14 +84,14 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestM
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition-colors"
+                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={!name.trim() || isLoading}
-                            className="px-4 py-2 bg-[#0E61B1] text-white rounded-xl font-medium hover:bg-[#0E61B1]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[#0E61B1] text-white rounded-xl font-medium hover:bg-[#0E61B1]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                             {isLoading ? "Creating..." : "Create Request"}
                         </button>

@@ -25,24 +25,24 @@ const JsonNode = ({ name, value, isLast = true }: { name?: string, value: any, i
 
         return (
             <div className="font-mono text-sm leading-6">
-                <div className="flex items-start hover:bg-gray-50" >
+                <div className="flex items-start hover:bg-gray-50 dark:hover:bg-gray-800 rounded-sm" >
                     <span className="mr-1 mt-1 text-gray-400">
                         {isExpanded ? <ChevronDown size={14} onClick={toggle} className="cursor-pointer" /> : <ChevronRight size={14} onClick={toggle} className="cursor-pointer" />}
                     </span>
                     <span className="mr-1">
-                        {name && <span className="text-purple-600 font-semibold">"{name}": </span>}
-                        <span className="text-gray-600">{opening}</span>
+                        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">"{name}": </span>}
+                        <span className="text-gray-600 dark:text-gray-300">{opening}</span>
                     </span>
                     {!isExpanded && (
-                        <span className="text-gray-400 italic text-xs ml-1">{preview}</span>
+                        <span className="text-gray-400 dark:text-gray-500 italic text-xs ml-1">{preview}</span>
                     )}
                     {!isExpanded && (
-                        <span className="text-gray-600">{closing}{!isLast && ','}</span>
+                        <span className="text-gray-600 dark:text-gray-300">{closing}{!isLast && ','}</span>
                     )}
                 </div>
 
                 {isExpanded && (
-                    <div className="pl-6 border-l border-gray-100 ml-2">
+                    <div className="pl-6 border-l border-gray-100 dark:border-gray-800 ml-2">
                         {keys.map((key, index) => (
                             <JsonNode
                                 key={key}
@@ -56,7 +56,7 @@ const JsonNode = ({ name, value, isLast = true }: { name?: string, value: any, i
 
                 {isExpanded && (
                     <div className="pl-6">
-                        <span className="text-gray-600">{closing}{!isLast && ','}</span>
+                        <span className="text-gray-600 dark:text-gray-300">{closing}{!isLast && ','}</span>
                     </div>
                 )}
             </div>
@@ -64,27 +64,27 @@ const JsonNode = ({ name, value, isLast = true }: { name?: string, value: any, i
     }
 
     // Primitive values
-    let renderValue = <span className="text-gray-800">{String(value)}</span>;
+    let renderValue = <span className="text-gray-800 dark:text-gray-200">{String(value)}</span>;
     if (typeof value === 'string') {
-        renderValue = <span className="text-green-600">"{value}"</span>;
+        renderValue = <span className="text-green-600 dark:text-green-400">"{value}"</span>;
     } else if (typeof value === 'number') {
-        renderValue = <span className="text-blue-600">{value}</span>;
+        renderValue = <span className="text-blue-600 dark:text-blue-400">{value}</span>;
     } else if (typeof value === 'boolean') {
-        renderValue = <span className="text-orange-600 font-bold">{String(value)}</span>;
+        renderValue = <span className="text-orange-600 dark:text-orange-400 font-bold">{String(value)}</span>;
     } else if (value === null) {
-        renderValue = <span className="text-gray-500 italic">null</span>;
+        renderValue = <span className="text-gray-500 dark:text-gray-400 italic">null</span>;
     } else if (isEmpty) {
-        renderValue = <span className="text-gray-600">{isArray ? '[]' : '{}'}</span>;
+        renderValue = <span className="text-gray-600 dark:text-gray-400">{isArray ? '[]' : '{}'}</span>;
     }
 
     return (
-        <div className="font-mono text-sm leading-6 hover:bg-gray-50 flex">
+        <div className="font-mono text-sm leading-6 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-sm flex">
             {/* Spacer for alignment with collapsible nodes arrows */}
             <span className="w-5 inline-block"></span>
             <span>
-                {name && <span className="text-purple-600 font-semibold">"{name}": </span>}
+                {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">"{name}": </span>}
                 {renderValue}
-                {!isLast && <span className="text-gray-500">,</span>}
+                {!isLast && <span className="text-gray-500 dark:text-gray-400">,</span>}
             </span>
         </div>
     );
@@ -103,7 +103,7 @@ export const JsonViewer = ({ data }: JsonViewerProps) => {
 
     if (!isJson) {
         return (
-            <pre className="whitespace-pre-wrap break-all text-gray-800 font-mono text-sm p-4">
+            <pre className="whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200 font-mono text-sm p-4">
                 {data}
             </pre>
         );

@@ -65,10 +65,10 @@ export const ContainerListProjects = ({ searchFilter = "" }: ContainerListProjec
     }
 
     return (
-        <div className={`${getBorderContentFiltered()} m-4 p-4 bg-[#F9FAFC] rounded-3xl h-[calc(100vh-10rem)]`}>
+        <div className={`${getBorderContentFiltered()} m-4 p-4 bg-[#F9FAFC] dark:bg-gray-900/80 rounded-3xl h-[calc(100vh-10rem)] transition-colors`}>
             <div className="pb-8">
-                <h1 className="text-2xl font-bold text-gray-800">Your projects</h1>
-                <p className="text-gray-500">{getFilterSearch()}</p>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Your projects</h1>
+                <p className="text-gray-500 dark:text-gray-400">{getFilterSearch()}</p>
             </div>
             <div className="flex flex-wrap gap-4 flex-1 h-[calc(100vh-17rem)] overflow-y-auto">
                 <NewProjectCard onClick={() => setIsModalOpen(true)} />
