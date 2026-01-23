@@ -60,7 +60,7 @@ class RequestController {
             // TODO: Get environment variables and set headers, body, etc
             const response = await invoke<RequestResponse>('make_http_request', {
                 method: request.method,
-                url: request.url,
+                url: request.url + request.params,
                 headers: {},
                 body: request.body || null
             });
@@ -87,7 +87,7 @@ class RequestController {
         try {
             const service = await this.getService();
             await service.updateRequest({ id: requestId, ...updates });
-            useRequestStore.getState().updateRequest({ id: requestId, project_id: projectId, ...updates });
+            useRequestStore.getState().updateRequest({ id: requestId, project_id: projectId, ...updates, is_dirty: false });
         } catch (error) {
             console.error('Failed to update request:', error);
         }

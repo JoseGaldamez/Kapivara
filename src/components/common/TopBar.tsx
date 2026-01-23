@@ -1,6 +1,9 @@
-import LogoKapivara from "@/assets/logo-kapivara.png"
+import LogoKapivaraLight from "@/assets/logotipo_light.png"
+import LogoKapivaraDark from "@/assets/logotipo_dark.png"
 import { Settings, User, X } from "lucide-react"
 import { toast } from "react-toastify"
+import { useSettingsStore } from "@/stores/settings.store"
+import { useEffect, useState } from "react"
 
 interface TopBarProps {
     searchTerm?: string;
@@ -10,6 +13,25 @@ interface TopBarProps {
 
 export const TopBar = ({ searchTerm = "", onSearchChange, onOpenSettings }: TopBarProps) => {
 
+    const theme = useSettingsStore(state => state.settings.theme);
+
+     const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">("light");
+    
+      useEffect(() => {
+        if (theme === 'auto') {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          setEffectiveTheme(mediaQuery.matches ? 'dark' : 'light');
+    
+          const handleChange = (e: MediaQueryListEvent) => {
+            setEffectiveTheme(e.matches ? 'dark' : 'light');
+          };
+    
+          mediaQuery.addEventListener('change', handleChange);
+          return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+          setEffectiveTheme(theme as "light" | "dark");
+        }
+      }, [theme]);
 
     const handleUser = () => {
         toast.info(`User not implemented yet`);
@@ -19,7 +41,8 @@ export const TopBar = ({ searchTerm = "", onSearchChange, onOpenSettings }: TopB
         <div className="w-full h-16 p-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                    <img src={LogoKapivara} alt="Logo Kapivara" className="w-52" />
+                    <img src={effectiveTheme === "light" ? LogoKapivaraLight : LogoKapivaraDark} alt="Logo Kapivara" className="w-52" />
+                    
                     <div className="px-4 relative">
                         <input
                             type="text"

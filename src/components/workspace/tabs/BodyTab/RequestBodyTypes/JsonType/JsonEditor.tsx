@@ -52,13 +52,32 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
 
             // Extract leading whitespace
             const indent = currentLine.match(/^\s*/)?.[0] || '';
-            const newValue = value.substring(0, start) + "\n" + indent + value.substring(end);
 
-            onChange(newValue);
+            // Smart Enter: if between {} or []
+            const charBefore = value[start - 1];
+            const charAfter = value[end];
+            const isSmartEnter = (charBefore === '{' && charAfter === '}') || (charBefore === '[' && charAfter === ']');
 
-            setTimeout(() => {
-                target.selectionStart = target.selectionEnd = start + 1 + indent.length;
-            }, 0);
+            if (isSmartEnter) {
+                const extraIndent = "    ";
+                // Insert: \n + indent + extraIndent (cursor here) + \n + indent (closing brace)
+                const newValue = value.substring(0, start) + "\n" + indent + extraIndent + "\n" + indent + value.substring(end);
+
+                onChange(newValue);
+
+                setTimeout(() => {
+                    target.selectionStart = target.selectionEnd = start + 1 + indent.length + extraIndent.length;
+                }, 0);
+            } else {
+                // Normal Enter: preserve indentation
+                const newValue = value.substring(0, start) + "\n" + indent + value.substring(end);
+
+                onChange(newValue);
+
+                setTimeout(() => {
+                    target.selectionStart = target.selectionEnd = start + 1 + indent.length;
+                }, 0);
+            }
         }
 
         if (e.key === '{' || e.key === '[' || e.key === '"') {

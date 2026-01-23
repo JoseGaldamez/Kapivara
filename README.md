@@ -20,17 +20,17 @@ While many desktop applications are bloated and slow, Kapivara focuses on speed,
 
 This project is built using a modern technology stack to ensure performance and maintainability:
 
-*   [![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
-*   [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-*   [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-*   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-*   [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-*   [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white)](https://github.com/pmndrs/zustand)
-*   [![Vite](https://img.shields.io/badge/Vite-000000?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+- [![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
+- [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+- [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+- [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+- [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+- [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=for-the-badge&logo=react&logoColor=white)](https://github.com/pmndrs/zustand)
+- [![Vite](https://img.shields.io/badge/Vite-000000?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
 
 ## 📦 Version AND Status
 
-**Current Version:** `0.1.2`
+**Current Version:** `0.1.5`
 
 > [!NOTE]  
 > Kapivara is currently in active development. Features may change as we iterate towards the v1.0 release.
@@ -41,9 +41,9 @@ To get a local copy up and running, follow these simple steps.
 
 ### Prerequisites
 
-*   **Node.js** (Latest LTS recommended)
-*   **Rust** (via `rustup`)
-*   **Tauri CLI**
+- **Node.js** (Latest LTS recommended)
+- **Rust** (via `rustup`)
+- **Tauri CLI**
 
 ### Installation
 
@@ -70,8 +70,8 @@ Please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file for more informati
 
 Distributed under a **Source Available License**.
 
-*   **Free to read, modify, and contribute.**
-*   **Commercial use is restricted to the copyright holder.**
+- **Free to read, modify, and contribute.**
+- **Commercial use is restricted to the copyright holder.**
 
 See `LICENSE` for more information.
 
@@ -88,4 +88,3 @@ See `LICENSE` for more information.
 **X:** [X Profile](https://x.com/josegaldamezdev)
 
 Project Link: [https://github.com/JoseGaldamez/Kapivara](https://github.com/JoseGaldamez/Kapivara)
-

@@ -44,6 +44,7 @@ export interface RequestInfo {
     auth?: string; // JSON string
     params?: string; // JSON string
     response?: RequestResponse | null;
+    is_dirty?: boolean;
     created_at?: string;
 }
 
@@ -60,6 +61,7 @@ export interface RequestParam {
     request_id: string;
     key: string;
     value: string;
+    description?: string;
     is_active: number;
 }
 

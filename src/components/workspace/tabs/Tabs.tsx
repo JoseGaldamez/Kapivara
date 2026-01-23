@@ -1,4 +1,4 @@
-const TABS = ["Body", "Params", "Authorization", "Headers", "Settings"];
+const TABS = ["Body", "Query Params", "Authorization", "Headers", "Settings"];
 
 interface TabsProps {
     activeTab: string;

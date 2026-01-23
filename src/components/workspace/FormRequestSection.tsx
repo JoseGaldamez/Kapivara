@@ -10,6 +10,7 @@ interface FormRequestSectionProps {
     handleSave: () => void;
     handleMethodChange: (method: string) => void;
     handleUrlChange: (url: string) => void;
+    isDirty?: boolean;
 }
 
 const METHODS = Object.keys(METHODS_COLORS);
@@ -19,7 +20,7 @@ const METHOD_OPTIONS = METHODS.map(m => ({
     className: METHODS_COLORS[m as keyof typeof METHODS_COLORS]
 }));
 
-export const FormRequestSection = ({ method, url, isLoading, handleSend, handleSave, handleMethodChange, handleUrlChange }: FormRequestSectionProps) => {
+export const FormRequestSection = ({ method, url, isLoading, handleSend, handleSave, handleMethodChange, handleUrlChange, isDirty }: FormRequestSectionProps) => {
 
 
     return (
@@ -36,6 +37,11 @@ export const FormRequestSection = ({ method, url, isLoading, handleSend, handleS
                     type="text"
                     value={url}
                     onChange={(e) => handleUrlChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSend();
+                        }
+                    }}
                     placeholder="Enter request URL"
                     className="flex-1 bg-transparent text-sm focus:outline-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
@@ -49,10 +55,14 @@ export const FormRequestSection = ({ method, url, isLoading, handleSend, handleS
             </button>
             <button
                 onClick={handleSave}
-                className="text-gray-500 dark:text-gray-400 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg hover:text-[#0E61B1] dark:hover:text-[#0E61B1] transition-colors cursor-pointer"
+                className={`p-2 rounded-lg transition-colors cursor-pointer relative ${isDirty ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0E61B1] dark:hover:text-[#0E61B1]'}`}
                 title="Save Request"
             >
                 <Save size={20} />
+                {isDirty && <span className="absolute top-2 right-2 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>}
             </button>
         </div>
     )

@@ -6,8 +6,10 @@ interface RequestState {
     // State
     requests: RequestInfo[];
     requestsByProject: Record<string, RequestInfo[]>;
+    activeRequestIdByProject: Record<string, string | null>;
 
     // Actions
+    setActiveRequest: (projectId: string, requestId: string | null) => void;
     setRequests: (projectId: string, requests: RequestInfo[]) => void;
     addRequest: (request: RequestInfo) => void;
     updateRequest: (request: Partial<RequestInfo> & { id: string; project_id: string }) => void;
@@ -15,7 +17,15 @@ interface RequestState {
 
 export const useRequestStore = create<RequestState>((set) => ({
     requestsByProject: {},
+    activeRequestIdByProject: {},
     requests: [],
+
+    setActiveRequest: (projectId, requestId) => set((state) => ({
+        activeRequestIdByProject: {
+            ...state.activeRequestIdByProject,
+            [projectId]: requestId
+        }
+    })),
 
     setRequests: (projectId, requests) => set((state) => ({
         requestsByProject: {

@@ -37,6 +37,8 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
 
     // TODO: Get requests, environment variables, etc
     const loadData = async () => {
+        // check if requests are already loaded
+        if (requests.length > 0) return;
         if (projectId) {
             await requestController.getRequests(projectId);
         }
@@ -97,6 +99,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                 </div>
             </div>
 
+           
 
             {/* TODO: Tree View when folders are implemented */}
             <div className="flex-1 overflow-y-auto p-2">
@@ -113,7 +116,11 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                                 className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer text-sm text-gray-700 dark:text-gray-300 ${getRequestSelected(req)}`}
                             >
                                 <span className={`text-[10px] font-bold w-8 ${getMethodColor(req.method)}`}>{req.method}</span>
-                                <span className="truncate">{req.name}</span>
+                                
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2 truncate">{req.name}</div>
+                                    {req.is_dirty ? (<div className="bg-orange-500 w-2 h-2 rounded-full"></div>) : ""}
+                                </div>
                             </div>
                         ))}
                     </div>

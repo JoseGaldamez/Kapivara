@@ -18,7 +18,13 @@ class RequestService {
     public async getRequests(projectId: string): Promise<RequestInfo[]> {
         if (!this.dbService) this.dbService = await DBService.getInstance();
         const query = `
-            SELECT r.*, rb.body_type, rb.raw_data as body 
+            SELECT 
+                r.*, 
+                rb.body_type, 
+                rb.raw_data as body,
+                (SELECT json_group_array(json_object('id', rp.id, 'key', rp.key, 'value', rp.value, 'description', rp.description, 'is_active', rp.is_active)) 
+                 FROM request_params rp 
+                 WHERE rp.request_id = r.id) as params
             FROM requests r 
             LEFT JOIN request_body rb ON r.id = rb.request_id 
             WHERE r.project_id = $1
@@ -116,6 +122,38 @@ class RequestService {
                     request.body || null
                 ]);
             }
+        }
+
+
+        // Handle Params updates
+        if (request.params !== undefined) {
+             
+             let paramsArray: any[] = [];
+             try {
+                paramsArray = typeof request.params === 'string' ? JSON.parse(request.params) : request.params;
+             } catch (e) {
+                 paramsArray = [];
+             }
+
+             if (Array.isArray(paramsArray)) {
+                await this.dbService.execute('DELETE FROM request_params WHERE request_id = $1', [request.id]);
+                
+                for (const param of paramsArray) {
+                    if (!param.key && !param.value) continue; // Skip empty
+                    
+                    await this.dbService.execute(`
+                        INSERT INTO request_params (id, request_id, key, value, description, is_active)
+                        VALUES ($1, $2, $3, $4, $5, $6)
+                    `, [
+                        param.id || crypto.randomUUID(),
+                        request.id,
+                        param.key,
+                        param.value,
+                        param.description || '',
+                        param.is_active
+                    ]);
+                }
+             }
         }
     }
 }

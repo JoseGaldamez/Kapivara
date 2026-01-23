@@ -16,9 +16,9 @@ type BodyType = 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
 const BODY_TYPES: { id: BodyType; label: string }[] = [
     { id: 'none', label: 'None' },
     { id: 'json', label: 'JSON' },
-    { id: 'form-data', label: 'Form Data' },
-    { id: 'x-www-form-urlencoded', label: 'x-www-form-urlencoded' },
-    { id: 'raw', label: 'Raw' },
+    // { id: 'form-data', label: 'Form Data' },
+    // { id: 'x-www-form-urlencoded', label: 'x-www-form-urlencoded' },
+    // { id: 'raw', label: 'Raw' },
 ];
 
 export const BodyTab = ({ body, setBody, bodyType, setBodyType }: BodyTabProps) => {

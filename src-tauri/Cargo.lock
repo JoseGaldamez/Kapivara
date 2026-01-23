@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "Kapivara"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "reqwest 0.13.1",
  "serde",

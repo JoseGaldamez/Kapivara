@@ -1,7 +1,7 @@
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { RequestPanel } from "@/components/workspace/RequestPanel";
 import { Project } from "@/types";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useRequestStore } from "@/stores/request.store";
 
 interface WorkspaceProps {
@@ -11,10 +11,11 @@ interface WorkspaceProps {
 const EMPTY_ARRAY: RequestInfo[] = [];
 
 export const Workspace = ({ project }: WorkspaceProps) => {
-    const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
-
     // Select the live request object from the store
     const requests = useRequestStore((state) => state.requestsByProject[project.uid] ?? EMPTY_ARRAY);
+    const activeRequestId = useRequestStore((state) => state.activeRequestIdByProject[project.uid] || null);
+    const setActiveRequest = useRequestStore((state) => state.setActiveRequest);
+
     const activeRequest = useMemo(() =>
         requests.find(r => r.id === activeRequestId) || null
         , [requests, activeRequestId]);
@@ -25,7 +26,7 @@ export const Workspace = ({ project }: WorkspaceProps) => {
             <Sidebar
                 projectId={project.uid}
                 activeRequestId={activeRequestId}
-                onSelectRequest={(req) => setActiveRequestId(req.id)}
+                onSelectRequest={(req) => setActiveRequest(project.uid, req.id)}
             />
             <div className="flex-1 bg-white dark:bg-gray-900 flex flex-col h-full overflow-hidden transition-colors">
                 {activeRequest ? (

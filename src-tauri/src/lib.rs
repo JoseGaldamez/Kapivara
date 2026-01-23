@@ -108,6 +108,12 @@ pub fn run() {
                             sql: include_str!("../migrations/3_settings_table.sql"),
                             kind: tauri_plugin_sql::MigrationKind::Up,
                         },
+                        tauri_plugin_sql::Migration {
+                            version: 4,
+                            description: "add_description_to_params",
+                            sql: include_str!("../migrations/4_add_description_to_params.sql"),
+                            kind: tauri_plugin_sql::MigrationKind::Up,
+                        },
                     ],
                 )
                 .build(),
