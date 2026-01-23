@@ -40,7 +40,7 @@ function App() {
       // 2. Close splashscreen after settings are loaded (and potentially a small delay for smoothness)
       setTimeout(() => {
         invoke("close_splashscreen");
-      }, 500);
+      }, 50);
     };
 
     initApp();
