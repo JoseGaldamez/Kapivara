@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { getBorderColor, highlight } from "./UtilsFunctionJsonEditor";
 
 interface JsonEditorProps {
     value: string;
@@ -29,14 +30,43 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
             const start = e.currentTarget.selectionStart;
             const end = e.currentTarget.selectionEnd;
             const target = e.currentTarget;
-            const newValue = value.substring(0, start) + "    " + value.substring(end);
 
-            onChange(newValue);
+            if (start !== end) {
+                // Multi-line selection indentation
+                // Find the start of the line where the selection begins
+                const firstLineStart = value.lastIndexOf('\n', start - 1) + 1;
+                // Find the end of the line where the selection ends
+                let lastLineEnd = value.indexOf('\n', end);
+                if (lastLineEnd === -1) lastLineEnd = value.length;
 
-            // We need to set selection after render
-            setTimeout(() => {
-                target.selectionStart = target.selectionEnd = start + 4;
-            }, 0);
+                // Extract the block of lines
+                const linesBlock = value.substring(firstLineStart, lastLineEnd);
+                const lines = linesBlock.split('\n');
+
+                // Add indentation to each line
+                const indentedLines = lines.map(line => "    " + line);
+                const indentedBlock = indentedLines.join('\n');
+
+                const newValue = value.substring(0, firstLineStart) + indentedBlock + value.substring(lastLineEnd);
+
+                onChange(newValue);
+
+                // Restore selection covering the entire indented block
+                setTimeout(() => {
+                    target.selectionStart = firstLineStart;
+                    target.selectionEnd = firstLineStart + indentedBlock.length;
+                    // If the user selected specifically, try to maintain relative selection? 
+                    // Usually block indent selects the whole line. Let's stick to selecting the whole affected block for clarity.
+                }, 0);
+            } else {
+                // Single cursor indentation
+                const newValue = value.substring(0, start) + "    " + value.substring(end);
+                onChange(newValue);
+
+                setTimeout(() => {
+                    target.selectionStart = target.selectionEnd = start + 4;
+                }, 0);
+            }
         }
 
         if (e.key === 'Enter') {
@@ -102,35 +132,12 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
         }
     };
 
-    const highlight = (code: string) => {
-        if (!code) return "";
-        return code
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
-                let cls = 'text-blue-600 dark:text-blue-400'; // number
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'text-purple-600 dark:text-purple-400 font-semibold'; // key
-                    } else {
-                        cls = 'text-green-600 dark:text-green-400'; // string
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'text-orange-600 dark:text-orange-400 font-bold'; // boolean
-                } else if (/null/.test(match)) {
-                    cls = 'text-gray-500 dark:text-gray-400 italic'; // null
-                }
-                return `<span class="${cls}">${match}</span>`;
-            });
-    };
 
-    const getBorderColor = () => {
-        return isValidJson ? 'border-gray-300 dark:border-gray-700' : 'border-red-500';
-    };
+
+
 
     return (
-        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor()} rounded overflow-hidden bg-gray-50 dark:bg-gray-900`}>
+        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor(isValidJson)} rounded overflow-hidden bg-gray-50 dark:bg-gray-900`}>
             <pre
                 ref={preRef}
                 className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none select-none overflow-hidden whitespace-pre text-gray-800 dark:text-gray-200"
