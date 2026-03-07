@@ -1,5 +1,5 @@
 import RequestService from "../services/request.service";
-import { RequestInfo, RequestResponse } from "@/types";
+import { RequestInfo, RequestResponse, Collection } from "@/types";
 import { useRequestStore } from "@/stores/request.store";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -25,7 +25,7 @@ class RequestController {
         }
     }
 
-    public async createRequest(projectId: string, name: string, method: string): Promise<RequestInfo> {
+    public async createRequest(projectId: string, name: string, method: string, collectionId?: string): Promise<RequestInfo> {
         try {
             const service = await this.getService();
             const newRequest: RequestInfo = {
@@ -34,13 +34,43 @@ class RequestController {
                 name,
                 method,
                 url: '',
-                collection_id: null
+                collection_id: collectionId || null
             };
             await service.createRequest(newRequest);
             useRequestStore.getState().addRequest(newRequest);
             return newRequest;
         } catch (error) {
             console.error('Failed to create request:', error);
+            throw error;
+        }
+    }
+
+    public async getCollections(projectId: string): Promise<Collection[]> {
+        try {
+            const service = await this.getService();
+            const collections = await service.getCollections(projectId);
+            useRequestStore.getState().setCollections(projectId, collections);
+            return collections;
+        } catch (error) {
+            console.error('Failed to get collections:', error);
+            return [];
+        }
+    }
+
+    public async createCollection(projectId: string, name: string, parentId?: string): Promise<Collection> {
+        try {
+            const service = await this.getService();
+            const newCollection: Collection = {
+                id: crypto.randomUUID(),
+                project_id: projectId,
+                name,
+                parent_id: parentId || null
+            };
+            await service.createCollection(newCollection);
+            useRequestStore.getState().addCollection(newCollection);
+            return newCollection;
+        } catch (error) {
+            console.error('Failed to create collection:', error);
             throw error;
         }
     }
@@ -65,16 +95,23 @@ class RequestController {
                 body: request.body || null
             });
 
-            // Save response to store. TODO: Should it be saved on the database? 
-            useRequestStore.getState().updateRequest({
-                id: request.id,
-                project_id: request.project_id,
+            // Save response to store and database
+            const updates: Partial<RequestInfo> = {
                 url: request.url,
                 method: request.method,
                 response: response,
                 body_type: request.body_type,
                 body: request.body
+            };
+            
+            useRequestStore.getState().updateRequest({
+                id: request.id,
+                project_id: request.project_id,
+                ...updates
             });
+            
+            // Persist the new response to SQLite database
+            await this.updateRequest(request.id, request.project_id, updates);
 
             return response;
         } catch (error) {

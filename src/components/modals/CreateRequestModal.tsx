@@ -4,12 +4,13 @@ import { useState } from "react";
 interface CreateRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (name: string, method: string) => Promise<void>;
+    onCreate: (name: string, method: string, collectionId?: string) => Promise<void>;
+    collectionId?: string; // Pre-select if we created it from a folder
 }
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
-export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestModalProps) => {
+export const CreateRequestModal = ({ isOpen, onClose, onCreate, collectionId }: CreateRequestModalProps) => {
     const [name, setName] = useState("");
     const [method, setMethod] = useState("GET");
     const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +23,7 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate }: CreateRequestM
 
         setIsLoading(true);
         try {
-            await onCreate(name, method);
+            await onCreate(name, method, collectionId);
             onClose();
             setName("");
             setMethod("GET");

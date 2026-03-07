@@ -1,5 +1,5 @@
 import DBService from "./db.service";
-import { RequestInfo } from "@/types";
+import { RequestInfo, Collection } from "@/types";
 
 class RequestService {
     private static instance: RequestService;
@@ -29,7 +29,41 @@ class RequestService {
             LEFT JOIN request_body rb ON r.id = rb.request_id 
             WHERE r.project_id = $1
         `;
-        return await this.dbService.select<RequestInfo[]>(query, [projectId]);
+        const results = await this.dbService.select<any[]>(query, [projectId]);
+        
+        // Parse the SQLite TEXT into JSON Object
+        return results.map(row => {
+            if (row.response && typeof row.response === 'string') {
+                try {
+                    row.response = JSON.parse(row.response);
+                } catch (e) {
+                    row.response = null;
+                }
+            }
+            return row as RequestInfo;
+        });
+    }
+
+    public async getCollections(projectId: string): Promise<Collection[]> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const query = `
+            SELECT * FROM collections WHERE project_id = $1 ORDER BY created_at ASC
+        `;
+        return await this.dbService.select<Collection[]>(query, [projectId]);
+    }
+
+    public async createCollection(collection: Collection): Promise<void> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const query = `
+            INSERT INTO collections (id, project_id, parent_id, name)
+            VALUES ($1, $2, $3, $4)
+        `;
+        await this.dbService.execute(query, [
+            collection.id,
+            collection.project_id,
+            collection.parent_id || null,
+            collection.name
+        ]);
     }
 
     public async createRequest(request: RequestInfo): Promise<void> {
@@ -78,6 +112,14 @@ class RequestService {
         if (request.url !== undefined) {
             fields.push(`url = $${index++}`);
             values.push(request.url);
+        }
+        if (request.collection_id !== undefined) {
+            fields.push(`collection_id = $${index++}`);
+            values.push(request.collection_id);
+        }
+        if (request.response !== undefined) {
+            fields.push(`response = $${index++}`);
+            values.push(request.response ? JSON.stringify(request.response) : null);
         }
         // Update requests table if needed
         if (fields.length > 0) {

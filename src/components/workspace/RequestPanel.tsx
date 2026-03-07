@@ -1,5 +1,5 @@
 import { RequestInfo, RequestParam } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { requestController } from "@/controllers/request.controller";
 import { useRequestStore } from "@/stores/request.store";
 import { JsonViewer } from "./JsonViewer";
@@ -12,6 +12,7 @@ import { BodyTab } from "./tabs/BodyTab/BodyTab";
 import { SettingsTab } from "./tabs/SettingsTab";
 import { Tabs } from "./tabs/Tabs";
 import { ResponseStatusBar } from "./ResponseStatusBar";
+import { Edit2 } from "lucide-react";
 
 interface RequestPanelProps {
     request: RequestInfo;
@@ -22,6 +23,11 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     const [url, setUrl] = useState(request.url || "");
     const [activeTab, setActiveTab] = useState("Body");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Title editing state
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [title, setTitle] = useState(request.name || "Untitled Request");
+    const titleInputRef = useRef<HTMLInputElement>(null);
 
     // Resize state
     const [body, setBody] = useState(request.body || "");
@@ -54,6 +60,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         setUrl(request.url || "");
         setBody(request.body || "");
         setBodyType(request.body_type || "none");
+        setTitle(request.name || "Untitled Request");
         
         try {
             const parsedParams =  typeof request.params === 'string' ? JSON.parse(request.params) : (request.params || []);
@@ -87,6 +94,34 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             document.removeEventListener('mouseup', handleMouseUp);
         };
     }, [isDragging]);
+
+    useEffect(() => {
+        if (isEditingTitle && titleInputRef.current) {
+            titleInputRef.current.focus();
+        }
+    }, [isEditingTitle]);
+
+    const handleTitleSave = async () => {
+        if (title.trim() === "") {
+            setTitle(request.name || "Untitled Request");
+            setIsEditingTitle(false);
+            return;
+        }
+        if (title !== request.name) {
+            await requestController.updateRequest(request.id, request.project_id, { name: title });
+            toast.success("Request renamed");
+        }
+        setIsEditingTitle(false);
+    };
+
+    const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            handleTitleSave();
+        } else if (e.key === "Escape") {
+            setTitle(request.name || "Untitled Request");
+            setIsEditingTitle(false);
+        }
+    };
 
     const handleSend = async () => {
         if (!url) return;
@@ -215,6 +250,28 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-gray-900 relative transition-colors">
+
+            {/* Editable Title Section */}
+            <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                {isEditingTitle ? (
+                    <input
+                        ref={titleInputRef}
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={handleTitleSave}
+                        onKeyDown={handleTitleKeyDown}
+                        className="text-xl font-bold bg-transparent border-b-2 border-[#0E61B1] focus:outline-none text-gray-800 dark:text-gray-100 min-w-[300px]"
+                    />
+                ) : (
+                    <div className="group flex items-center gap-3 cursor-pointer" onClick={() => setIsEditingTitle(true)}>
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+                        <button className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-[#0E61B1] transition-all">
+                            <Edit2 size={18} />
+                        </button>
+                    </div>
+                )}
+            </div>
 
             <FormRequestSection
                 method={method}

@@ -1,17 +1,13 @@
 import { useState, useEffect } from "react";
 import { useRequestStore } from "@/stores/request.store";
-import { FolderPlus, FilePlus, Search } from "lucide-react";
-
 import { RequestInfo } from "@/types";
-
-// Utils
 import { METHODS_COLORS } from "@/utils/methods.constants";
-
-// Controllers
 import { requestController } from "@/controllers/request.controller";
-
-// Modals
+import { useSidebarResize } from "@/hooks/useSidebarResize";
+import { SidebarHeader } from "@/components/sidebar/SidebarHeader";
+import { SidebarList } from "@/components/sidebar/SidebarList";
 import { CreateRequestModal } from "../modals/CreateRequestModal";
+import { CreateFolderModal } from "../modals/CreateFolderModal";
 import { toast } from "react-toastify";
 
 interface SidebarProps {
@@ -20,52 +16,66 @@ interface SidebarProps {
     onSelectRequest: (request: RequestInfo) => void;
 }
 
-const EMPTY_ARRAY: RequestInfo[] = [];
+const EMPTY_REQUESTS: RequestInfo[] = [];
+const EMPTY_COLLECTIONS: [] = [];
 
 export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: SidebarProps) => {
-
     const [searchTerm, setSearchTerm] = useState("");
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+    const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+    const [activeFolderIdForCreate, setActiveFolderIdForCreate] = useState<string | undefined>(undefined);
 
-    const requests = useRequestStore((state) => state.requestsByProject[projectId] ?? EMPTY_ARRAY);
+    const { width, sidebarRef, startResizing } = useSidebarResize();
 
+    const requests = useRequestStore((state) => state.requestsByProject[projectId] ?? EMPTY_REQUESTS);
+    const collections = useRequestStore((state) => state.collectionsByProject?.[projectId] ?? EMPTY_COLLECTIONS);
 
     useEffect(() => {
-        loadData();
+        if (requests.length === 0 && collections.length === 0 && projectId) {
+            Promise.all([
+                requestController.getCollections(projectId),
+                requestController.getRequests(projectId),
+            ]);
+        }
     }, [projectId]);
 
-
-    // TODO: Get requests, environment variables, etc
-    const loadData = async () => {
-        // check if requests are already loaded
-        if (requests.length > 0) return;
-        if (projectId) {
-            await requestController.getRequests(projectId);
-        }
-    };
-
-
-    const handleCreateRequest = async (name: string, method: string) => {
+    const handleCreateRequest = async (name: string, method: string, collectionId?: string) => {
         try {
-            const newReq = await requestController.createRequest(projectId, name, method);
+            const newReq = await requestController.createRequest(projectId, name, method, collectionId);
             onSelectRequest(newReq);
+            setActiveFolderIdForCreate(undefined);
         } catch (error) {
             console.error("Error creating request", error);
         }
     };
 
-    const handleCreateFolder = async () => {
+    const handleCreateFolder = async (name: string, parentId?: string) => {
         try {
-            toast.info("Folder not implemented yet");
+            await requestController.createCollection(projectId, name, parentId);
+            toast.success("Folder created successfully");
+            setActiveFolderIdForCreate(undefined);
         } catch (error) {
             console.error("Error creating folder", error);
+            toast.error("Failed to create folder");
         }
     };
 
-
-    const getMethodColor = (method: string) => {
-        return METHODS_COLORS[method as keyof typeof METHODS_COLORS];
+    const openCreateRequestModal = (folderId?: string) => {
+        setActiveFolderIdForCreate(folderId);
+        setIsCreateModalOpen(true);
     };
+
+    const openCreateFolderModal = (folderId?: string) => {
+        setActiveFolderIdForCreate(folderId);
+        setIsCreateFolderModalOpen(true);
+    };
+
+    const toggleFolder = (folderId: string) => {
+        setExpandedFolders((prev) => ({ ...prev, [folderId]: !prev[folderId] }));
+    };
+
+    const getMethodColor = (method: string) => METHODS_COLORS[method as keyof typeof METHODS_COLORS];
 
     const getRequestSelected = (request: RequestInfo) => {
         if (!activeRequestId || !request.id || request.id !== activeRequestId) return "";
@@ -73,64 +83,50 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
     };
 
     return (
-        <div className="w-64 flex flex-col h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-colors">
+        <div
+            ref={sidebarRef}
+            style={{ width: `${width}px` }}
+            className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-colors relative shrink-0 overflow-x-hidden"
+        >
+            {/* Resize handle */}
+            <div
+                className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#0E61B1]/50 z-10 transition-colors"
+                onMouseDown={startResizing}
+            />
 
-            <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="flex gap-2 mb-2">
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#0E61B1] text-white py-1.5 rounded-lg text-xs font-medium hover:bg-[#0E61B1]/90"
-                    >
-                        <FilePlus size={14} /> New Request
-                    </button>
-                    <button onClick={handleCreateFolder} className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg" title="New Folder">
-                        <FolderPlus size={16} />
-                    </button>
-                </div>
-                <div className="relative">
-                    <Search size={14} className="absolute left-2.5 top-2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Filter..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-[#0E61B1] dark:text-gray-200"
-                    />
-                </div>
-            </div>
+            <SidebarHeader
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onNewRequest={() => openCreateRequestModal()}
+                onNewFolder={() => openCreateFolderModal()}
+            />
 
-           
-
-            {/* TODO: Tree View when folders are implemented */}
-            <div className="flex-1 overflow-y-auto p-2">
-                {requests.length === 0 ? (
-                    <div className="text-xs text-gray-500 dark:text-gray-500 text-center mt-4">
-                        No requests yet. <br /> Create one to get started!
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-1">
-                        {requests.map(req => (
-                            <div
-                                key={req.id}
-                                onClick={() => onSelectRequest(req)}
-                                className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer text-sm text-gray-700 dark:text-gray-300 ${getRequestSelected(req)}`}
-                            >
-                                <span className={`text-[10px] font-bold w-8 ${getMethodColor(req.method)}`}>{req.method}</span>
-                                
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-2 truncate">{req.name}</div>
-                                    {req.is_dirty ? (<div className="bg-orange-500 w-2 h-2 rounded-full"></div>) : ""}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+            <SidebarList
+                requests={requests}
+                collections={collections}
+                projectId={projectId}
+                activeRequestId={activeRequestId}
+                onSelectRequest={onSelectRequest}
+                expandedFolders={expandedFolders}
+                toggleFolder={toggleFolder}
+                openCreateRequestModal={openCreateRequestModal}
+                openCreateFolderModal={openCreateFolderModal}
+                getMethodColor={getMethodColor}
+                getRequestSelected={getRequestSelected}
+            />
 
             <CreateRequestModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onCreate={handleCreateRequest}
+                onCreate={(name, method, collectionId) => handleCreateRequest(name, method, collectionId)}
+                collectionId={activeFolderIdForCreate}
+            />
+
+            <CreateFolderModal
+                isOpen={isCreateFolderModalOpen}
+                onClose={() => setIsCreateFolderModalOpen(false)}
+                onCreate={(name, parentId) => handleCreateFolder(name, parentId)}
+                parentId={activeFolderIdForCreate}
             />
         </div>
     );
