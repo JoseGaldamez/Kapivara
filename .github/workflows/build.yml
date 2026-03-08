@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -32,10 +34,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact-name: kapivara_${{ needs.get-version.outputs.version }}_linux
-          #- os: windows-latest
-          #  artifact-name: kapivara_${{ needs.get-version.outputs.version }}_windows
-          #- os: macos-latest
-          #  artifact-name: kapivara_${{ needs.get-version.outputs.version }}_macos
+          - os: windows-latest
+            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_windows
+          - os: macos-latest
+            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_macos
 
     runs-on: ${{ matrix.os }}
 
@@ -87,7 +89,7 @@ jobs:
   release:
     needs: [get-version, build-tauri]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Download all artifacts
@@ -103,5 +105,6 @@ jobs:
           draft: false
           prerelease: false
           files: artifacts/**/*
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
