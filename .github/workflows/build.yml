@@ -32,12 +32,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_linux
-          - os: windows-latest
-            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_windows
-          - os: macos-latest
-            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_macos
+          - os: ubuntu-24.04
+            artifact-name: kapivara_${{ needs.get-version.outputs.version }}_linux.deb
+          #- os: windows-latest
+          #  artifact-name: kapivara_${{ needs.get-version.outputs.version }}_windows
+          #- os: macos-latest
+          #  artifact-name: kapivara_${{ needs.get-version.outputs.version }}_macos
 
     runs-on: ${{ matrix.os }}
 
