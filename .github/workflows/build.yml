@@ -109,10 +109,8 @@ jobs:
 
           files: |
             artifacts/**/*.deb
+            artifacts/**/*.rpm
             artifacts/**/*.AppImage
-            artifacts/**/*.msi
-            artifacts/**/*.exe
-            artifacts/**/*.dmg
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
