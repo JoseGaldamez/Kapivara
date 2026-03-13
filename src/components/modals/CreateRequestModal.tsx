@@ -1,5 +1,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
+import { MethodButton } from "../common/Button";
+import { METHODS_COLORS, METHODS_STYLE_COLORS_BG } from "@/utils/methods.constants";
 
 interface CreateRequestModalProps {
     isOpen: boolean;
@@ -9,6 +11,12 @@ interface CreateRequestModalProps {
 }
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+const METHOD_OPTIONS = HTTP_METHODS.map(m => ({
+    label: m,
+    value: m,
+    className: METHODS_COLORS[m as keyof typeof METHODS_COLORS],
+    activeClassName: METHODS_STYLE_COLORS_BG[m as keyof typeof METHODS_STYLE_COLORS_BG],
+}));
 
 export const CreateRequestModal = ({ isOpen, onClose, onCreate, collectionId }: CreateRequestModalProps) => {
     const [name, setName] = useState("");
@@ -65,18 +73,12 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate, collectionId }: 
                             Method
                         </label>
                         <div className="grid grid-cols-4 gap-2">
-                            {HTTP_METHODS.map((m) => (
-                                <button
-                                    key={m}
-                                    type="button"
-                                    onClick={() => setMethod(m)}
-                                    className={`px-2 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${method === m
-                                        ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-500 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500"
-                                        : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500"
-                                        }`}
-                                >
-                                    {m}
-                                </button>
+                            {METHOD_OPTIONS.map((option) => (
+                                <MethodButton
+                                    value={method}
+                                    onChange={setMethod}
+                                    option={option}
+                                />
                             ))}
                         </div>
                     </div>
