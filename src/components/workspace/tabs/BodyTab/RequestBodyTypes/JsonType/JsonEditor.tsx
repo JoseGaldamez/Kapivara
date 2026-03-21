@@ -20,7 +20,7 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
     const handleScroll = () => {
         if (textareaRef.current && preRef.current) {
             preRef.current.scrollTop = textareaRef.current.scrollTop;
-            preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+            // No horizontal scroll sync needed — we use word-wrap
         }
     };
 
@@ -140,7 +140,7 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
         <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor(isValidJson)} rounded overflow-hidden bg-gray-50 dark:bg-gray-900`}>
             <pre
                 ref={preRef}
-                className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none select-none overflow-hidden whitespace-pre text-gray-800 dark:text-gray-200"
+                className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none select-none overflow-hidden whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200"
                 dangerouslySetInnerHTML={{ __html: highlight(value) + '<br>' }}
                 style={{ fontFamily: 'monospace' }}
             />
@@ -150,12 +150,12 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 onScroll={handleScroll}
-                className="absolute top-0 left-0 w-full h-full p-2 m-0 text-transparent caret-black dark:caret-white outline-none resize-none whitespace-pre overflow-auto"
+                className="absolute top-0 left-0 w-full h-full p-2 m-0 text-transparent caret-black dark:caret-white outline-none resize-none whitespace-pre-wrap overflow-auto"
                 spellCheck={false}
                 autoCapitalize="off"
                 autoComplete="off"
                 autoCorrect="off"
-                style={{ fontFamily: 'monospace' }}
+                style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}
             />
         </div>
     );

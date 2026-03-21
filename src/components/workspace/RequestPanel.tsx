@@ -1,4 +1,4 @@
-import { RequestInfo, RequestParam } from "@/types";
+import { RequestInfo, RequestParam, RequestHeader } from "@/types";
 import { useState, useEffect, useRef } from "react";
 import { requestController } from "@/controllers/request.controller";
 import { useRequestStore } from "@/stores/request.store";
@@ -46,6 +46,15 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         }
     });
 
+    const [headers, setHeaders] = useState<RequestHeader[]>(() => {
+        if (!request.headers) return [];
+        try {
+            return typeof request.headers === 'string' ? JSON.parse(request.headers) : request.headers;
+        } catch {
+            return [];
+        }
+    });
+
     const [auth, setAuth] = useState<any>(() => {
         try {
             return request.auth ? JSON.parse(request.auth) : { auth_type: 'none' };
@@ -80,6 +89,13 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             setQueryParams(parsedParams);
         } catch {
             setQueryParams([]);
+        }
+
+        try {
+            const parsedHeaders = typeof request.headers === 'string' ? JSON.parse(request.headers) : (request.headers || []);
+            setHeaders(parsedHeaders);
+        } catch {
+            setHeaders([]);
         }
 
         try {
@@ -147,15 +163,17 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         setIsLoading(true);
         try {
             // Allow controller to use the passed request object but with current UI values
-            const reqToSend = { 
-                ...request, 
-                method, 
-                url: url, 
-                params: JSON.stringify(queryParams), 
-                body, 
-                body_type: bodyType, 
-                auth: JSON.stringify(auth) 
+            const reqToSend = {
+                ...request,
+                method,
+                url: url,
+                params: JSON.stringify(queryParams),
+                headers: JSON.stringify(headers),
+                body,
+                body_type: bodyType,
+                auth: JSON.stringify(auth)
             };
+
             await requestController.executeRequest(reqToSend);
         } catch (error) {
             console.error("Request failed handled in UI:", error);
@@ -251,6 +269,16 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         });
     };
 
+    const handleUpdateHeaders = (newHeaders: RequestHeader[]) => {
+        setHeaders(newHeaders);
+        useRequestStore.getState().updateRequest({
+            id: request.id,
+            project_id: request.project_id,
+            headers: JSON.stringify(newHeaders),
+            is_dirty: true
+        });
+    };
+
     const handleAuthChange = (newAuth: any) => {
         setAuth(newAuth);
         useRequestStore.getState().updateRequest({
@@ -268,6 +296,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             body: body,
             body_type: bodyType,
             params: JSON.stringify(queryParams),
+            headers: JSON.stringify(headers),
             auth: JSON.stringify(auth)
         });
         toast.success("Request saved");
@@ -327,7 +356,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             <div className="flex-1 p-4 overflow-y-auto">
                 {activeTab === "Query Params" && <QueryParamsTab params={queryParams} onUpdate={handleUpdateParams} />}
                 {activeTab === "Authorization" && <AuthorizationTab auth={auth} onUpdate={handleAuthChange} />}
-                {activeTab === "Headers" && <HeadersTab />}
+                {activeTab === "Headers" && <HeadersTab headers={headers} onUpdate={handleUpdateHeaders} />}
                 {activeTab === "Body" && <BodyTab
                     body={body}
                     setBody={handleBodyChange}
@@ -362,7 +391,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                                             </p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="pl-16 space-y-6">
                                         <div className="w-full bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-5">
                                             <h4 className="font-medium text-orange-800 dark:text-orange-300 mb-3 flex items-center gap-2">

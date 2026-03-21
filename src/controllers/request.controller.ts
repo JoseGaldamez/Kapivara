@@ -107,6 +107,19 @@ class RequestController {
             // Setup Headers
             const headers: Record<string, string> = {};
 
+            let headersArray: any[] = [];
+            try {
+                headersArray = typeof request.headers === 'string' ? JSON.parse(request.headers) : request.headers;
+            } catch (e) {
+                headersArray = [];
+            }
+            if (Array.isArray(headersArray)) {
+                const activeHeaders = headersArray.filter(h => h.is_active !== 0 && h.key);
+                activeHeaders.forEach(h => {
+                    headers[h.key] = h.value || '';
+                });
+            }
+
             // Handle Authorization
             let authObj: any = null;
             try {
@@ -135,11 +148,31 @@ class RequestController {
                 } // wait for more auth types
             }
 
+            let finalBody = request.body || null;
+            if (request.body_type === 'x-www-form-urlencoded' && request.body) {
+                let items: any[] = [];
+                try {
+                    items = JSON.parse(request.body);
+                } catch (e) { }
+
+                if (Array.isArray(items)) {
+                    const params = new URLSearchParams();
+                    items.forEach(item => {
+                        if (item.is_active !== 0 && item.key) {
+                            params.append(item.key, item.value || '');
+                        }
+                    });
+                    finalBody = params.toString();
+                    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+                }
+            }
+
             const response = await invoke<RequestResponse>('make_http_request', {
                 method: request.method,
                 url: finalUrl,
                 headers,
-                body: request.body || null
+                body: finalBody,
+                bodyType: request.body_type || null
             });
 
             // Save response to store and database
@@ -163,7 +196,7 @@ class RequestController {
             return response;
         } catch (error: any) {
             console.error('Failed to execute request:', error);
-            
+
             const errorResponse: RequestResponse = {
                 status: 0,
                 status_text: "Connection Error",

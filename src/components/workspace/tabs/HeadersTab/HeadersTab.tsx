@@ -1,62 +1,54 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { RequestHeader } from "@/types";
 
-interface UrlEncodedItem {
-    id: string;
-    key: string;
-    value: string;
-    is_active: number;
+interface HeadersTabProps {
+    headers: RequestHeader[];
+    onUpdate: (headers: RequestHeader[]) => void;
 }
 
-interface UrlEncodedTypeProps {
-    value: string;
-    onChange: (value: string) => void;
-}
-
-export const UrlEncodedType = ({ value: initialValue, onChange }: UrlEncodedTypeProps) => {
-    const [localItems, setLocalItems] = useState<UrlEncodedItem[]>([]);
+export const HeadersTab = ({ headers: initialHeaders, onUpdate }: HeadersTabProps) => {
+   
+    const [localHeaders, setLocalHeaders] = useState<RequestHeader[]>([]);
 
     useEffect(() => {
-        let parsed: UrlEncodedItem[] = [];
-        try {
-            parsed = initialValue ? JSON.parse(initialValue) : [];
-        } catch {
-            parsed = [];
-        }
-
-        if (parsed.length > 0) {
-            const last = parsed[parsed.length - 1];
+        // Initialize local headers from props, ensuring at least one empty row
+        if (initialHeaders && initialHeaders.length > 0) {
+            // Check if last one is empty, if not add one
+            const last = initialHeaders[initialHeaders.length - 1];
             if (last.key || last.value) {
-                setLocalItems([...parsed, { id: crypto.randomUUID(), key: "", value: "", is_active: 1 }]);
+                 setLocalHeaders([...initialHeaders, { id: crypto.randomUUID(), request_id: '', key: "", value: "", is_active: 1 }]);
             } else {
-                setLocalItems(parsed);
+                setLocalHeaders(initialHeaders);
             }
         } else {
-            setLocalItems([{ id: crypto.randomUUID(), key: "", value: "", is_active: 1 }]);
+             setLocalHeaders([{ id: crypto.randomUUID(), request_id: '', key: "", value: "", is_active: 1 }]);
         }
-    }, [initialValue]);
+    }, [initialHeaders]);
 
-    const updateItem = (id: string, field: keyof UrlEncodedItem, val: any) => {
-        const newItems = localItems.map(h => h.id === id ? { ...h, [field]: val } : h);
+    const updateHeader = (id: string, field: keyof RequestHeader, value: any) => {
+        const newHeaders = localHeaders.map(h => h.id === id ? { ...h, [field]: value } : h);
         
-        const lastItem = newItems[newItems.length - 1];
-        if (lastItem.key || lastItem.value) {
-            newItems.push({ id: crypto.randomUUID(), key: "", value: "", is_active: 1 });
+         // Auto-add and remove empty logic
+        const lastHeader = newHeaders[newHeaders.length - 1];
+        if (lastHeader.key || lastHeader.value) {
+            newHeaders.push({ id: crypto.randomUUID(), request_id: '', key: "", value: "", is_active: 1 });
         }
 
-        setLocalItems(newItems);
-        onChange(JSON.stringify(newItems.filter(i => i.key || i.value)));
+        setLocalHeaders(newHeaders);
+        onUpdate(newHeaders);
     };
 
-    const removeItem = (id: string) => {
-        let newItems = localItems.filter(h => h.id !== id);
+    const removeHeader = (id: string) => {
+        let newHeaders = localHeaders.filter(h => h.id !== id);
         
-        if (newItems.length === 0 || (newItems[newItems.length - 1].key || newItems[newItems.length - 1].value)) {
-            newItems.push({ id: crypto.randomUUID(), key: "", value: "", is_active: 1 });
+        // Ensure there's always at least one empty row at the end
+        if (newHeaders.length === 0 || (newHeaders[newHeaders.length - 1].key || newHeaders[newHeaders.length - 1].value)) {
+                newHeaders.push({ id: crypto.randomUUID(), request_id: '', key: "", value: "", is_active: 1 });
         }
         
-        setLocalItems(newItems);
-        onChange(JSON.stringify(newItems.filter(i => i.key || i.value)));
+        setLocalHeaders(newHeaders);
+        onUpdate(newHeaders);
     };
 
     return (
@@ -72,17 +64,17 @@ export const UrlEncodedType = ({ value: initialValue, onChange }: UrlEncodedType
                         </tr>
                     </thead>
                     <tbody>
-                        {localItems.map((item, index) => {
-                            const isLast = index === localItems.length - 1;
+                        {localHeaders.map((header, index) => {
+                            const isLast = index === localHeaders.length - 1;
                             return (
-                                <tr key={item.id} className="group border-b border-gray-100 dark:border-gray-800/50">
+                                <tr key={header.id} className="group border-b border-gray-100 dark:border-gray-800/50">
                                     <td className="p-2 text-center">
                                         {!isLast && (
                                             <input 
                                                 type="checkbox" 
                                                 className="rounded border-gray-300 dark:border-gray-600 cursor-pointer" 
-                                                checked={item.is_active === 1}
-                                                onChange={(e) => updateItem(item.id, 'is_active', e.target.checked ? 1 : 0)}
+                                                checked={header.is_active === 1}
+                                                onChange={(e) => updateHeader(header.id, 'is_active', e.target.checked ? 1 : 0)}
                                             />
                                         )}
                                     </td>
@@ -91,8 +83,8 @@ export const UrlEncodedType = ({ value: initialValue, onChange }: UrlEncodedType
                                             type="text"
                                             placeholder="Key"
                                             className="w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none"
-                                            value={item.key}
-                                            onChange={(e) => updateItem(item.id, 'key', e.target.value)}
+                                            value={header.key}
+                                            onChange={(e) => updateHeader(header.id, 'key', e.target.value)}
                                         />
                                     </td>
                                     <td className="p-1">
@@ -100,14 +92,14 @@ export const UrlEncodedType = ({ value: initialValue, onChange }: UrlEncodedType
                                             type="text"
                                             placeholder="Value"
                                             className="w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none"
-                                            value={item.value}
-                                            onChange={(e) => updateItem(item.id, 'value', e.target.value)}
+                                            value={header.value}
+                                            onChange={(e) => updateHeader(header.id, 'value', e.target.value)}
                                         />
                                     </td>
                                     <td className="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         {!isLast && (
                                             <button 
-                                                onClick={() => removeItem(item.id)}
+                                                onClick={() => removeHeader(header.id)}
                                                 className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                                             >
                                                 <Trash2 size={14} />

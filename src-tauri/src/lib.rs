@@ -20,6 +20,15 @@ struct HttpResponse {
     time_ms: u128,
 }
 
+#[derive(serde::Deserialize)]
+struct FormDataItem {
+    key: String,
+    value: String,
+    #[serde(rename = "type")]
+    item_type: String, // "text" | "file"
+    is_active: u8,
+}
+
 // TODO: should I move this to other file?
 #[tauri::command]
 async fn make_http_request(
@@ -27,22 +36,99 @@ async fn make_http_request(
     url: String,
     headers: Option<HashMap<String, String>>,
     body: Option<String>,
+    body_type: Option<String>,
 ) -> Result<HttpResponse, String> {
     let client = reqwest::Client::new();
     let method = reqwest::Method::from_str(&method.to_uppercase()).map_err(|e| e.to_string())?;
 
     let start = Instant::now();
 
-    let mut request_builder = client.request(method, &url);
+    let mut actual_headers = headers.unwrap_or_default();
 
-    if let Some(h) = headers {
-        for (k, v) in h {
-            request_builder = request_builder.header(k, v);
+    // If body_type is form-data, we MUST strip any user-defined Content-Type
+    // because reqwest::multipart generates its own boundary identifier.
+    if let Some(ref t) = body_type {
+        if t == "form-data" {
+            let keys: Vec<String> = actual_headers.keys().cloned().collect();
+            for k in keys {
+                if k.eq_ignore_ascii_case("content-type") {
+                    actual_headers.remove(&k);
+                }
+            }
         }
     }
 
+    let mut request_builder = client.request(method, &url);
+
+    for (k, v) in actual_headers {
+        request_builder = request_builder.header(k, v);
+    }
+
     if let Some(b) = body {
-        request_builder = request_builder.body(b);
+        if let Some(t) = body_type {
+            if t == "form-data" {
+                let items: Vec<FormDataItem> =
+                    serde_json::from_str(&b).map_err(|e| e.to_string())?;
+                let mut form = reqwest::multipart::Form::new();
+                for item in items {
+                    // Skip items without a key (trailing empty rows from the UI)
+                    if item.key.is_empty() {
+                        continue;
+                    }
+                    if item.is_active == 1 {
+                        if item.item_type == "file" {
+                            if item.value.is_empty() {
+                                continue;
+                            }
+                            let file_bytes = std::fs::read(&item.value).map_err(|e| {
+                                format!("Failed to read file {}: {}", item.value, e)
+                            })?;
+                            let file_name = std::path::Path::new(&item.value)
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("file")
+                                .to_string();
+                            // Infer MIME type from the file extension so that
+                            // server-side multipart parsers (e.g. multer) can
+                            // correctly classify the uploaded file.
+                            let mime_type = match std::path::Path::new(&item.value)
+                                .extension()
+                                .and_then(|e| e.to_str())
+                                .map(|e| e.to_lowercase())
+                                .as_deref()
+                            {
+                                Some("jpg") | Some("jpeg") => "image/jpeg",
+                                Some("png") => "image/png",
+                                Some("gif") => "image/gif",
+                                Some("webp") => "image/webp",
+                                Some("svg") => "image/svg+xml",
+                                Some("pdf") => "application/pdf",
+                                Some("mp4") => "video/mp4",
+                                Some("mov") => "video/quicktime",
+                                Some("mp3") => "audio/mpeg",
+                                Some("json") => "application/json",
+                                Some("txt") => "text/plain",
+                                Some("csv") => "text/csv",
+                                Some("zip") => "application/zip",
+                                _ => "application/octet-stream",
+                            };
+                            let part = reqwest::multipart::Part::bytes(file_bytes)
+                                .file_name(file_name)
+                                .mime_str(mime_type)
+                                .map_err(|e| e.to_string())?;
+                            form = form.part(item.key, part);
+                        } else {
+                            form = form.text(item.key, item.value);
+                        }
+                    }
+                }
+                request_builder = request_builder.multipart(form);
+            } else {
+                request_builder = request_builder.body(b);
+            }
+        } else {
+            request_builder = request_builder.body(b);
+        }
     }
 
     let response = request_builder.send().await.map_err(|e| e.to_string())?;
@@ -125,6 +211,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             greet,

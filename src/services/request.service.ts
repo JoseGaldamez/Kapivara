@@ -25,6 +25,9 @@ class RequestService {
                 (SELECT json_group_array(json_object('id', rp.id, 'key', rp.key, 'value', rp.value, 'description', rp.description, 'is_active', rp.is_active)) 
                  FROM request_params rp 
                  WHERE rp.request_id = r.id) as params,
+                (SELECT json_group_array(json_object('id', rh.id, 'key', rh.key, 'value', rh.value, 'is_active', rh.is_active)) 
+                 FROM request_headers rh 
+                 WHERE rh.request_id = r.id) as headers,
                 (SELECT json_object('id', ra.id, 'auth_type', ra.auth_type, 'auth_data', ra.auth_data)
                  FROM request_auth ra
                  WHERE ra.request_id = r.id) as auth
@@ -207,6 +210,35 @@ class RequestService {
                         param.value,
                         param.description || '',
                         param.is_active
+                    ]);
+                }
+            }
+        }
+
+        // Handle Headers updates
+        if (request.headers !== undefined) {
+            let headersArray: any[] = [];
+            try {
+                headersArray = typeof request.headers === 'string' ? JSON.parse(request.headers) : request.headers;
+            } catch (e) {
+                headersArray = [];
+            }
+
+            if (Array.isArray(headersArray)) {
+                await this.dbService.execute('DELETE FROM request_headers WHERE request_id = $1', [request.id]);
+
+                for (const header of headersArray) {
+                    if (!header.key && !header.value) continue; // Skip empty
+
+                    await this.dbService.execute(`
+                        INSERT INTO request_headers (id, request_id, key, value, is_active)
+                        VALUES ($1, $2, $3, $4, $5)
+                    `, [
+                        header.id || crypto.randomUUID(),
+                        request.id,
+                        header.key,
+                        header.value,
+                        header.is_active
                     ]);
                 }
             }
