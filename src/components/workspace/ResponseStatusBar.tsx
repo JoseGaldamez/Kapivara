@@ -1,10 +1,16 @@
 
 import { RequestInfo } from "@/types";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ChevronsDown, ChevronsUp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-export const ResponseStatusBar = ({ request }: { request: RequestInfo }) => {
+interface ResponseStatusBarProps {
+    request: RequestInfo;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
+}
+
+export const ResponseStatusBar = ({ request, isCollapsed = false, onToggleCollapse }: ResponseStatusBarProps) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopyResponse = () => {
@@ -43,6 +49,15 @@ export const ResponseStatusBar = ({ request }: { request: RequestInfo }) => {
                     >
                         {isCopied ? <Check size={14} /> : <Copy size={14} />}
                     </button>
+                    {onToggleCollapse ? (
+                        <button
+                            onClick={onToggleCollapse}
+                            className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                            title={isCollapsed ? "Expand response" : "Collapse response"}
+                        >
+                            {isCollapsed ? <ChevronsUp size={14} /> : <ChevronsDown size={14} />}
+                        </button>
+                    ) : null}
                 </div>
             )}
         </div>

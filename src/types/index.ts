@@ -7,9 +7,19 @@ export interface Project {
     created_at?: string;
 }
 
+export type EnvironmentScope = 'project' | 'global';
+
+export interface EnvironmentVariable {
+    id: string;
+    key: string;
+    value: string;
+    enabled: number;
+}
+
 export interface Environment {
     id: string;
-    project_id: string;
+    project_id?: string | null;
+    scope: EnvironmentScope;
     name: string;
     variables: string; // JSON string
     created_at?: string;
