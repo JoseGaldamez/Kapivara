@@ -173,14 +173,27 @@ class EnvironmentController {
         useEnvironmentStore.getState().setActiveGlobalEnvironment(environmentId);
     }
 
+    public async forceRefreshForProject(projectId: string): Promise<void> {
+        await Promise.all([
+            this.loadProjectEnvironments(projectId),
+            this.loadGlobalEnvironments(),
+            this.loadActiveProjectEnvironment(projectId),
+            this.loadActiveGlobalEnvironment(),
+        ]);
+    }
+
     public async getResolvedVariables(projectId: string): Promise<Record<string, string>> {
         const freshState = useEnvironmentStore.getState();
 
         const activeProjectId = freshState.activeProjectEnvironmentIdByProject[projectId] ?? null;
         const activeGlobalId = freshState.activeGlobalEnvironmentId;
 
-        const projectEnvironment = (freshState.projectEnvironmentsByProject[projectId] || []).find((env) => env.id === activeProjectId);
-        const globalEnvironment = freshState.globalEnvironments.find((env) => env.id === activeGlobalId);
+        const projectEnvironment = activeProjectId
+            ? (freshState.projectEnvironmentsByProject[projectId] || []).find((env) => env.id === activeProjectId)
+            : undefined;
+        const globalEnvironment = activeGlobalId
+            ? freshState.globalEnvironments.find((env) => env.id === activeGlobalId)
+            : undefined;
 
         const globalVariables = this.parseEnvironmentVariables(globalEnvironment);
         const projectVariables = this.parseEnvironmentVariables(projectEnvironment);

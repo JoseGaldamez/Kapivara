@@ -2,7 +2,7 @@ import { METHODS_COLORS } from '@/utils/methods.constants';
 import { Play, Save } from 'lucide-react';
 import { Select } from '@/components/common/Select';
 import { VarBadge } from '@/components/common/VarBadge';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { Environment, EnvironmentVariable } from '@/types';
 import { environmentController } from '@/controllers/environment.controller';
 import { toast } from 'react-toastify';
@@ -19,6 +19,8 @@ interface FormRequestSectionProps {
     variableKeys?: string[];
     variablePreview?: Record<string, string>;
     projectId?: string;
+    activeProjectEnvironmentId?: string | null;
+    activeGlobalEnvironmentId?: string | null;
     projectEnvironments?: Environment[];
     globalEnvironments?: Environment[];
     onVariableAdded?: () => void;
@@ -28,6 +30,9 @@ interface AddVarState {
     name: string;
     selectedEnvId: string;
     value: string;
+    isUpdate: boolean;
+    userEditedValue: boolean;
+    userEditedEnv: boolean;
 }
 
 const METHODS = Object.keys(METHODS_COLORS);
@@ -40,13 +45,48 @@ const METHOD_OPTIONS = METHODS.map(m => ({
 export const FormRequestSection = ({
     method, url, isLoading, handleSend, handleSave, handleMethodChange, handleUrlChange,
     isDirty, variableKeys = [], variablePreview = {},
-    projectId, projectEnvironments = [], globalEnvironments = [], onVariableAdded
+    projectId, activeProjectEnvironmentId = null, activeGlobalEnvironmentId = null,
+    projectEnvironments = [], globalEnvironments = [], onVariableAdded
 }: FormRequestSectionProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
     const [addVarState, setAddVarState] = useState<AddVarState | null>(null);
 
     const detectedVariables = Array.from(url.matchAll(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g));
+
+    const findEnvForVariable = useCallback((varName: string): { envId: string; currentValue: string } => {
+        const activeProjectEnv = projectEnvironments.find(e => e.id === activeProjectEnvironmentId);
+        if (activeProjectEnv) {
+            try {
+                const vars: EnvironmentVariable[] = activeProjectEnv.variables ? JSON.parse(activeProjectEnv.variables) : [];
+                const found = vars.find(v => v.key === varName && v.enabled === 1);
+                if (found) return { envId: activeProjectEnv.id, currentValue: found.value };
+            } catch { /* skip */ }
+        }
+        const activeGlobalEnv = globalEnvironments.find(e => e.id === activeGlobalEnvironmentId);
+        if (activeGlobalEnv) {
+            try {
+                const vars: EnvironmentVariable[] = activeGlobalEnv.variables ? JSON.parse(activeGlobalEnv.variables) : [];
+                const found = vars.find(v => v.key === varName && v.enabled === 1);
+                if (found) return { envId: activeGlobalEnv.id, currentValue: found.value };
+            } catch { /* skip */ }
+        }
+        return { envId: activeProjectEnvironmentId || activeGlobalEnvironmentId || '', currentValue: '' };
+    }, [projectEnvironments, globalEnvironments, activeProjectEnvironmentId, activeGlobalEnvironmentId]);
+
+    // Recalculate addVarState when active environment or its variables change
+    useEffect(() => {
+        if (!addVarState) return;
+        const { envId, currentValue } = findEnvForVariable(addVarState.name);
+        setAddVarState(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                selectedEnvId: prev.userEditedEnv ? prev.selectedEnvId : envId,
+                value: prev.userEditedValue ? prev.value : currentValue,
+            };
+        });
+    }, [findEnvForVariable]);
 
     const allEnvironmentOptions = [
         { value: '', label: 'Select environment...' },
@@ -70,7 +110,7 @@ export const FormRequestSection = ({
             const updatedVars = [...existingVars.filter(v => v.key !== addVarState.name), newVar];
             const scope = env.project_id ? 'project' as const : 'global' as const;
             await environmentController.updateEnvironmentVariables(scope, env.id, updatedVars, scope === 'project' ? projectId : undefined);
-            toast.success(`Variable {{${addVarState.name}}} added`);
+            toast.success(`Variable {{${addVarState.name}}} ${addVarState.isUpdate ? 'updated' : 'added'}`);
             setAddVarState(null);
             onVariableAdded?.();
         } catch {
@@ -111,7 +151,11 @@ export const FormRequestSection = ({
                         name={variableName}
                         exists={exists}
                         resolvedValue={resolvedValue}
-                        onClickMissing={() => setAddVarState({ name: variableName, selectedEnvId: '', value: '' })}
+                        onClickMissing={() => setAddVarState({ name: variableName, selectedEnvId: '', value: '', isUpdate: false, userEditedValue: false, userEditedEnv: false })}
+                        onClickExists={() => {
+                            const { envId, currentValue } = findEnvForVariable(variableName);
+                            setAddVarState({ name: variableName, selectedEnvId: envId, value: currentValue, isUpdate: true, userEditedValue: false, userEditedEnv: false });
+                        }}
                     />
                 </span>
             );
@@ -154,7 +198,7 @@ export const FormRequestSection = ({
                             value={url}
                             list="environment-variable-suggestions-url"
                             onChange={(e) => handleUrlChange(e.target.value)}
-                            onFocus={() => { setIsFocused(true); setAddVarState(null); }}
+                            onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
                             placeholder="Enter request URL"
@@ -165,7 +209,10 @@ export const FormRequestSection = ({
 
                         {/* Highlighted overlay - visible when not focused */}
                         {!isFocused && (
-                            <div className="absolute inset-0 pointer-events-none flex items-center text-sm overflow-hidden whitespace-nowrap">
+                            <div
+                                className="absolute inset-0 flex items-center text-sm overflow-hidden whitespace-nowrap"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {renderHighlightedUrl()}
                             </div>
                         )}
@@ -204,24 +251,24 @@ export const FormRequestSection = ({
             </div>
 
             {/* Inline "Add variable to environment" form */}
-            {addVarState && !isFocused && (
+            {addVarState && (
                 <div className="mt-2 p-3 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 flex flex-col gap-2">
                     <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                        Add variable{' '}
+                        {addVarState.isUpdate ? 'Update' : 'Add'} variable{' '}
                         <code className="text-violet-600 dark:text-violet-400 font-mono">{`{{${addVarState.name}}}`}</code>
                     </p>
                     <div className="flex gap-2 flex-wrap">
                         <div className="w-52">
                             <Select
                                 value={addVarState.selectedEnvId}
-                                onChange={(v) => setAddVarState(prev => prev ? { ...prev, selectedEnvId: v } : null)}
+                                onChange={(v) => setAddVarState(prev => prev ? { ...prev, selectedEnvId: v, userEditedEnv: true } : null)}
                                 options={allEnvironmentOptions}
                                 className="w-full"
                             />
                         </div>
                         <input
                             value={addVarState.value}
-                            onChange={(e) => setAddVarState(prev => prev ? { ...prev, value: e.target.value } : null)}
+                            onChange={(e) => setAddVarState(prev => prev ? { ...prev, value: e.target.value, userEditedValue: true } : null)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); if (e.key === 'Escape') setAddVarState(null); }}
                             placeholder="Value"
                             autoFocus
@@ -231,7 +278,7 @@ export const FormRequestSection = ({
                             onClick={handleAddVariable}
                             className="px-4 py-1.5 text-sm bg-[#0E61B1] text-white rounded-lg hover:bg-[#0E61B1]/90 cursor-pointer"
                         >
-                            Add
+                            {addVarState.isUpdate ? 'Update' : 'Add'}
                         </button>
                         <button
                             onClick={() => setAddVarState(null)}

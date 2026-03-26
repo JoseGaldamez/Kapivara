@@ -93,6 +93,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     const projectEnvironments = useEnvironmentStore((state) => state.projectEnvironmentsByProject[request.project_id] ?? EMPTY_ENVIRONMENTS);
     const globalEnvironments = useEnvironmentStore((state) => state.globalEnvironments);
     const activeProjectEnvironmentId = useEnvironmentStore((state) => state.activeProjectEnvironmentIdByProject[request.project_id] ?? null);
+    const activeGlobalEnvironmentId = useEnvironmentStore((state) => state.activeGlobalEnvironmentId);
 
 
     useEffect(() => {
@@ -107,12 +108,14 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
     useEffect(() => {
         const refreshVariables = async () => {
+            await environmentController.loadProjectEnvironments(request.project_id);
+            await environmentController.loadGlobalEnvironments();
             const nextVariables = await environmentController.getResolvedVariables(request.project_id);
             setResolvedVariables(nextVariables);
         };
 
         refreshVariables();
-    }, [request.project_id, activeProjectEnvironmentId]);
+    }, [request.project_id, activeProjectEnvironmentId, activeGlobalEnvironmentId]);
 
     useEffect(() => {
         setMethod(request.method || "GET");
@@ -342,6 +345,8 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     const handleProjectEnvironmentChange = async (value: string) => {
         const nextId = value === '__none__' ? null : value;
         await environmentController.setActiveEnvironment('project', nextId, request.project_id);
+        await environmentController.loadProjectEnvironments(request.project_id);
+        await environmentController.loadGlobalEnvironments();
         const nextVariables = await environmentController.getResolvedVariables(request.project_id);
         setResolvedVariables(nextVariables);
     };
@@ -412,7 +417,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
             <FormRequestSection
                 method={method}
-                url={url + getQueries()}
+                url={url}
                 isLoading={isLoading}
                 handleSend={handleSend}
                 handleSave={handleSave}
@@ -424,6 +429,8 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                 projectId={request.project_id}
                 projectEnvironments={projectEnvironments}
                 globalEnvironments={globalEnvironments}
+                activeProjectEnvironmentId={activeProjectEnvironmentId}
+                activeGlobalEnvironmentId={activeGlobalEnvironmentId}
                 onVariableAdded={async () => {
                     await environmentController.bootstrap(request.project_id);
                     const nextVariables = await environmentController.getResolvedVariables(request.project_id);

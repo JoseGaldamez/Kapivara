@@ -9,8 +9,9 @@ class ProjectService {
 
     public static async getInstance(): Promise<ProjectService> {
         if (!ProjectService.instance) {
-            ProjectService.instance = new ProjectService();
-            ProjectService.instance.dbService = await DBService.getInstance();
+            const inst = new ProjectService();
+            inst.dbService = await DBService.getInstance();
+            ProjectService.instance = inst;
         }
         return ProjectService.instance;
     }

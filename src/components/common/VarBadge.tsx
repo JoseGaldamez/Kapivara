@@ -6,9 +6,10 @@ interface VarBadgeProps {
     exists: boolean;
     resolvedValue?: string;
     onClickMissing?: () => void;
+    onClickExists?: () => void;
 }
 
-export const VarBadge = ({ name, exists, resolvedValue, onClickMissing }: VarBadgeProps) => {
+export const VarBadge = ({ name, exists, resolvedValue, onClickMissing, onClickExists }: VarBadgeProps) => {
     const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLSpanElement>) => {
@@ -23,11 +24,11 @@ export const VarBadge = ({ name, exists, resolvedValue, onClickMissing }: VarBad
             <span
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                onClick={!exists ? onClickMissing : undefined}
-                title={exists ? undefined : 'Click to add this variable'}
+                onClick={exists ? onClickExists : onClickMissing}
+                title={exists ? 'Click to edit this variable' : 'Click to add this variable'}
                 className={`px-1.5 py-0.5 rounded border text-xs font-mono select-none inline-block ${
                     exists
-                        ? 'bg-violet-50 dark:bg-violet-900/25 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 cursor-default'
+                        ? 'bg-violet-50 dark:bg-violet-900/25 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 cursor-pointer hover:bg-violet-100 dark:hover:bg-violet-900/40'
                         : 'bg-red-50 dark:bg-red-900/25 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/40'
                 }`}
                 style={{ pointerEvents: 'auto' }}

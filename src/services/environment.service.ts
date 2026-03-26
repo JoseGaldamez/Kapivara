@@ -9,8 +9,9 @@ class EnvironmentService {
 
     public static async getInstance(): Promise<EnvironmentService> {
         if (!EnvironmentService.instance) {
-            EnvironmentService.instance = new EnvironmentService();
-            EnvironmentService.instance.dbService = await DBService.getInstance();
+            const inst = new EnvironmentService();
+            inst.dbService = await DBService.getInstance();
+            EnvironmentService.instance = inst;
         }
         return EnvironmentService.instance;
     }

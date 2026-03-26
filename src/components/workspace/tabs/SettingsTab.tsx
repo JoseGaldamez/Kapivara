@@ -84,6 +84,11 @@ const EnvironmentSection = ({ title, scope, projectId, environments, activeId, o
         const nextValue = value === '__none__' ? null : value;
         try {
             await environmentController.setActiveEnvironment(scope, nextValue, scope === 'project' ? projectId : undefined);
+            if (scope === 'project') {
+                await environmentController.loadProjectEnvironments(projectId);
+            } else {
+                await environmentController.loadGlobalEnvironments();
+            }
             await onEnvironmentChanged();
         } catch (error) {
             console.error('Failed to set active environment:', error);

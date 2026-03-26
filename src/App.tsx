@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 import { MainLayout } from "./layouts/MainLayout";
 import { settingsController } from "./controllers/settings.controller";
+import { projectController } from "./controllers/project.controller";
 import { useTheme } from "./hooks/useTheme";
 
 
@@ -34,10 +35,13 @@ function App() {
 
   useEffect(() => {
     const initApp = async () => {
-      // 1. Load settings first
-      await settingsController.loadSettings();
+      // 1. Load settings and projects in parallel
+      await Promise.all([
+        settingsController.loadSettings(),
+        projectController.loadProjects(),
+      ]);
 
-      // 2. Close splashscreen after settings are loaded (and potentially a small delay for smoothness)
+      // 2. Close splashscreen
       setTimeout(() => {
         invoke("close_splashscreen");
       }, 50);

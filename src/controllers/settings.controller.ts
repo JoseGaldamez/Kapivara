@@ -8,42 +8,49 @@ class SettingsController {
 
     private async getService() {
         if (!this.service) {
-            this.service = await SettingsService.getInstance();
+            try {
+                this.service = await SettingsService.getInstance();
+            } catch (e) {
+                this.service = null;
+                throw e;
+            }
         }
         return this.service;
     }
 
-    public async loadSettings() {
+    public async loadSettings(retries = 3, delayMs = 500) {
         useSettingsStore.getState().setLoading(true);
-        try {
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                const service = await this.getService();
+                const result = await service.getSettings();
 
-            const service = await this.getService();
-            const result = await service.getSettings();
+                const loadedSettings: Partial<AppSettings> = {};
+                result.forEach(item => {
+                    const key = item.key as keyof AppSettings;
+                    let value: any = item.value;
+                    if (key === 'editor_font_size' || key === 'request_timeout') {
+                        value = parseInt(value, 10);
+                    } else if (value === 'true') {
+                        value = true;
+                    } else if (value === 'false') {
+                        value = false;
+                    }
+                    loadedSettings[key] = value;
+                });
 
-            const loadedSettings: Partial<AppSettings> = {};
-
-            result.forEach(item => {
-                const key = item.key as keyof AppSettings;
-                let value: any = item.value;
-
-                // Parse types
-                if (key === 'editor_font_size' || key === 'request_timeout') {
-                    value = parseInt(value, 10);
-                } else if (value === 'true') {
-                    value = true;
-                } else if (value === 'false') {
-                    value = false;
+                useSettingsStore.getState().setSettings(loadedSettings);
+                return;
+            } catch (error) {
+                this.service = null;
+                if (attempt < retries - 1) {
+                    await new Promise(r => setTimeout(r, delayMs));
+                } else {
+                    console.error('Failed to load settings:', error);
+                    toast.error('Failed to load settings');
+                    useSettingsStore.getState().setSettings({});
                 }
-
-                loadedSettings[key] = value;
-            });
-
-            useSettingsStore.getState().setSettings(loadedSettings);
-
-        } catch (error) {
-            console.error('Failed to load settings:', error);
-            toast.error('Failed to load settings');
-            useSettingsStore.getState().setLoading(false);
+            }
         }
     }
 

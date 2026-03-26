@@ -1,18 +1,23 @@
 import Database from '@tauri-apps/plugin-sql';
 
 class DBService {
-    private static instance: DBService;
+    private static initPromise: Promise<DBService> | null = null;
     private db: Database | null = null;
-    private dbName = 'sqlite:kapivara.db';
+    private readonly dbName = 'sqlite:kapivara.db';
 
     private constructor() { }
 
-    public static async getInstance(): Promise<DBService> {
-        if (!DBService.instance) {
-            DBService.instance = new DBService();
-            await DBService.instance.init();
+    public static getInstance(): Promise<DBService> {
+        if (!DBService.initPromise) {
+            const inst = new DBService();
+            DBService.initPromise = inst.init()
+                .then(() => inst)
+                .catch((e) => {
+                    DBService.initPromise = null;
+                    throw e;
+                });
         }
-        return DBService.instance;
+        return DBService.initPromise;
     }
 
     private async init() {
@@ -20,12 +25,10 @@ class DBService {
     }
 
     public async select<T>(query: string, args?: unknown[]): Promise<T> {
-        if (!this.db) await this.init();
         return await this.db!.select<T>(query, args);
     }
 
     public async execute(query: string, args?: unknown[]): Promise<void> {
-        if (!this.db) await this.init();
         await this.db!.execute(query, args);
     }
 }

@@ -1,8 +1,6 @@
-const TEMPLATE_REGEX = /{{\s*([A-Za-z0-9_.-]+)\s*}}/g;
-
 export const resolveTemplateString = (value: string, variables: Record<string, string>): string => {
     if (!value) return value;
-    return value.replace(TEMPLATE_REGEX, (_, variableName: string) => {
+    return value.replace(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g, (_, variableName: string) => {
         return variables[variableName] ?? `{{${variableName}}}`;
     });
 };

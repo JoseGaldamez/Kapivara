@@ -9,8 +9,9 @@ class SettingsService {
 
     public static async getInstance(): Promise<SettingsService> {
         if (!SettingsService.instance) {
-            SettingsService.instance = new SettingsService();
-            SettingsService.instance.dbService = await DBService.getInstance();
+            const inst = new SettingsService();
+            inst.dbService = await DBService.getInstance();
+            SettingsService.instance = inst;
         }
         return SettingsService.instance;
     }

@@ -90,7 +90,7 @@ class RequestController {
 
     public async executeRequest(request: RequestInfo): Promise<RequestResponse> {
         try {
-            await environmentController.bootstrap(request.project_id);
+            await environmentController.forceRefreshForProject(request.project_id);
             const activeVariables = await environmentController.getResolvedVariables(request.project_id);
 
             // Parse Params

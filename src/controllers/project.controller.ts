@@ -7,7 +7,12 @@ class ProjectController {
 
     private async getService() {
         if (!this.service) {
-            this.service = await ProjectService.getInstance();
+            try {
+                this.service = await ProjectService.getInstance();
+            } catch (e) {
+                this.service = null;
+                throw e;
+            }
         }
         return this.service;
     }
