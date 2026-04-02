@@ -71,16 +71,6 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         }
     });
 
-    const getQueries = () => {
-        if (!queryParams || queryParams.length === 0) return "";
-        const queries = queryParams
-            .filter(p => p.is_active === 1 && p.key)
-            .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
-            .join('&');
-        return queries ? `?${queries}` : "";
-    };
-
-
     const [responseHeight, setResponseHeight] = useState(300);
     const [isDragging, setIsDragging] = useState(false);
     const [isEnvironmentPanelVisible, setIsEnvironmentPanelVisible] = useState(false);

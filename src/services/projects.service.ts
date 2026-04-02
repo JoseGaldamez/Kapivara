@@ -3,7 +3,6 @@ import { Project } from "@/types";
 
 class ProjectService {
     private static instancePromise: Promise<ProjectService> | null = null;
-    private dbService: DBService | null = null;
 
     private constructor() { }
 
@@ -11,7 +10,7 @@ class ProjectService {
         if (!ProjectService.instancePromise) {
             ProjectService.instancePromise = (async () => {
                 const inst = new ProjectService();
-                inst.dbService = await DBService.getInstance();
+                await DBService.getInstance();
                 return inst;
             })().catch(e => {
                 ProjectService.instancePromise = null;

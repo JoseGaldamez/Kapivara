@@ -18,6 +18,7 @@ interface RequestState {
     updateRequest: (request: Partial<RequestInfo> & { id: string; project_id: string }) => void;
     setSavedResponses: (requestId: string, responses: SavedResponse[]) => void;
     addSavedResponse: (response: SavedResponse) => void;
+    removeSavedResponse: (requestId: string, id: string) => void;
     removeRequest: (projectId: string, requestId: string) => void;
 }
 
@@ -88,7 +89,7 @@ export const useRequestStore = create<RequestState>((set) => ({
         }
     })),
 
-    removeSavedResponse: (requestId, id) => set((state) => ({
+    removeSavedResponse: (requestId: string, id: string) => set((state) => ({
         savedResponsesByRequest: {
             ...state.savedResponsesByRequest,
             [requestId]: (state.savedResponsesByRequest[requestId] || []).filter(r => r.id !== id)
