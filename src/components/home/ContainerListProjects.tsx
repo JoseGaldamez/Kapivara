@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useProjectStore } from "@/stores/project.store"
 import { Project } from "@/types"
 
@@ -19,10 +19,6 @@ export const ContainerListProjects = ({ searchFilter = "" }: ContainerListProjec
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-
-    useEffect(() => {
-        projectController.loadProjects();
-    }, []);
 
     const filteredProjects = projects.filter(project =>
         project.name.toLowerCase().includes(searchFilter.toLowerCase())

@@ -2,31 +2,36 @@ import DBService from "./db.service";
 import { Project } from "@/types";
 
 class ProjectService {
-    private static instance: ProjectService;
+    private static instancePromise: Promise<ProjectService> | null = null;
     private dbService: DBService | null = null;
 
     private constructor() { }
 
     public static async getInstance(): Promise<ProjectService> {
-        if (!ProjectService.instance) {
-            ProjectService.instance = new ProjectService();
-            ProjectService.instance.dbService = await DBService.getInstance();
+        if (!ProjectService.instancePromise) {
+            ProjectService.instancePromise = (async () => {
+                const inst = new ProjectService();
+                inst.dbService = await DBService.getInstance();
+                return inst;
+            })().catch(e => {
+                ProjectService.instancePromise = null;
+                throw e;
+            });
         }
-        return ProjectService.instance;
+        return ProjectService.instancePromise;
     }
 
     public async getProjects(): Promise<Project[]> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
-        return await this.dbService.select<Project[]>('SELECT * FROM projects ORDER BY created_at DESC');
+        return await DBService.getInstance().then(db => db.select<Project[]>('SELECT * FROM projects ORDER BY created_at DESC'));
     }
 
     public async createProject(project: Project): Promise<void> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const db = await DBService.getInstance();
         const query = `
       INSERT INTO projects (uid, name, description, iconColor, lastOpenAt)
       VALUES ($1, $2, $3, $4, $5)
     `;
-        await this.dbService.execute(query, [
+        await db.execute(query, [
             project.uid,
             project.name,
             project.description || '',
@@ -36,8 +41,8 @@ class ProjectService {
     }
 
     public async deleteProject(projectId: string): Promise<void> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
-        await this.dbService.execute('DELETE FROM projects WHERE uid = $1', [projectId]);
+        const db = await DBService.getInstance();
+        await db.execute('DELETE FROM projects WHERE uid = $1', [projectId]);
     }
 }
 

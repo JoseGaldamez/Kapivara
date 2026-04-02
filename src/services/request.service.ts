@@ -1,22 +1,28 @@
 import DBService from "./db.service";
-import { RequestInfo, Collection } from "@/types";
+import { RequestInfo, Collection, SavedResponse } from "@/types";
 
 class RequestService {
-    private static instance: RequestService;
+    private static instancePromise: Promise<RequestService> | null = null;
     private dbService: DBService | null = null;
 
     private constructor() { }
 
     public static async getInstance(): Promise<RequestService> {
-        if (!RequestService.instance) {
-            RequestService.instance = new RequestService();
-            RequestService.instance.dbService = await DBService.getInstance();
+        if (!RequestService.instancePromise) {
+            RequestService.instancePromise = (async () => {
+                const inst = new RequestService();
+                inst.dbService = await DBService.getInstance();
+                return inst;
+            })().catch(e => {
+                RequestService.instancePromise = null;
+                throw e;
+            });
         }
-        return RequestService.instance;
+        return RequestService.instancePromise;
     }
 
     public async getRequests(projectId: string): Promise<RequestInfo[]> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const db = await DBService.getInstance();
         const query = `
             SELECT 
                 r.*, 
@@ -35,7 +41,7 @@ class RequestService {
             LEFT JOIN request_body rb ON r.id = rb.request_id 
             WHERE r.project_id = $1
         `;
-        const results = await this.dbService.select<any[]>(query, [projectId]);
+        const results = await db.select<any[]>(query, [projectId]);
 
         // Parse the SQLite TEXT into JSON Object
         return results.map(row => {
@@ -51,20 +57,20 @@ class RequestService {
     }
 
     public async getCollections(projectId: string): Promise<Collection[]> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const db = await DBService.getInstance();
         const query = `
             SELECT * FROM collections WHERE project_id = $1 ORDER BY created_at ASC
         `;
-        return await this.dbService.select<Collection[]>(query, [projectId]);
+        return await db.select<Collection[]>(query, [projectId]);
     }
 
     public async createCollection(collection: Collection): Promise<void> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const db = await DBService.getInstance();
         const query = `
             INSERT INTO collections (id, project_id, parent_id, name)
             VALUES ($1, $2, $3, $4)
         `;
-        await this.dbService.execute(query, [
+        await db.execute(query, [
             collection.id,
             collection.project_id,
             collection.parent_id || null,
@@ -73,12 +79,12 @@ class RequestService {
     }
 
     public async createRequest(request: RequestInfo): Promise<void> {
-        if (!this.dbService) this.dbService = await DBService.getInstance();
+        const db = await DBService.getInstance();
         const query = `
       INSERT INTO requests (id, collection_id, project_id, name, method, url)
       VALUES ($1, $2, $3, $4, $5, $6)
     `;
-        await this.dbService.execute(query, [
+        await db.execute(query, [
             request.id,
             request.collection_id,
             request.project_id,
@@ -91,7 +97,7 @@ class RequestService {
             INSERT INTO request_body (id, request_id, body_type, raw_data)
             VALUES ($1, $2, $3, $4)
         `;
-        await this.dbService.execute(bodyQuery, [
+        await db.execute(bodyQuery, [
             crypto.randomUUID(),
             request.id,
             request.body_type || 'none',
@@ -102,12 +108,38 @@ class RequestService {
             INSERT INTO request_auth (id, request_id, auth_type, auth_data)
             VALUES ($1, $2, $3, $4)
         `;
-        await this.dbService.execute(authQuery, [
+        await db.execute(authQuery, [
             crypto.randomUUID(),
             request.id,
             'none',
             null
         ]);
+    }
+
+    public async getSavedResponses(requestId: string): Promise<SavedResponse[]> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        return await this.dbService.select<SavedResponse[]>(
+            'SELECT * FROM saved_responses WHERE request_id = $1 ORDER BY created_at DESC',
+            [requestId]
+        );
+    }
+
+    public async saveResponse(saved: SavedResponse): Promise<void> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        await this.dbService.execute(
+            `INSERT INTO saved_responses (id, request_id, name, status, status_text, headers, body, time_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [saved.id, saved.request_id, saved.name, saved.status, saved.status_text, saved.headers, saved.body ?? null, saved.time_ms]
+        );
+    }
+
+    public async deleteSavedResponse(id: string): Promise<void> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        await this.dbService.execute('DELETE FROM saved_responses WHERE id = $1', [id]);
+    }
+
+    public async deleteRequest(requestId: string): Promise<void> {
+        if (!this.dbService) this.dbService = await DBService.getInstance();
+        await this.dbService.execute('DELETE FROM requests WHERE id = $1', [requestId]);
     }
 
     public async updateRequest(request: Partial<RequestInfo> & { id: string }): Promise<void> {

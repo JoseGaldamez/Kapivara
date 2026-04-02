@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { RequestInfo, Collection } from '../types';
+import { RequestInfo, Collection, SavedResponse } from '../types';
 
-//TODO: Should we store metadata like active tab, height of response panel, response time, etc?
 interface RequestState {
     // State
     requests: RequestInfo[];
     requestsByProject: Record<string, RequestInfo[]>;
     collectionsByProject: Record<string, Collection[]>;
     activeRequestIdByProject: Record<string, string | null>;
+    savedResponsesByRequest: Record<string, SavedResponse[]>;
 
     // Actions
     setActiveRequest: (projectId: string, requestId: string | null) => void;
@@ -16,12 +16,16 @@ interface RequestState {
     addRequest: (request: RequestInfo) => void;
     addCollection: (collection: Collection) => void;
     updateRequest: (request: Partial<RequestInfo> & { id: string; project_id: string }) => void;
+    setSavedResponses: (requestId: string, responses: SavedResponse[]) => void;
+    addSavedResponse: (response: SavedResponse) => void;
+    removeRequest: (projectId: string, requestId: string) => void;
 }
 
 export const useRequestStore = create<RequestState>((set) => ({
     requestsByProject: {},
     collectionsByProject: {},
     activeRequestIdByProject: {},
+    savedResponsesByRequest: {},
     requests: [],
 
     setActiveRequest: (projectId, requestId) => set((state) => ({
@@ -71,5 +75,34 @@ export const useRequestStore = create<RequestState>((set) => ({
                 [project_id]: updatedRequests
             }
         };
-    })
+    }),
+
+    setSavedResponses: (requestId, responses) => set((state) => ({
+        savedResponsesByRequest: { ...state.savedResponsesByRequest, [requestId]: responses }
+    })),
+
+    addSavedResponse: (response) => set((state) => ({
+        savedResponsesByRequest: {
+            ...state.savedResponsesByRequest,
+            [response.request_id]: [response, ...(state.savedResponsesByRequest[response.request_id] || [])]
+        }
+    })),
+
+    removeSavedResponse: (requestId, id) => set((state) => ({
+        savedResponsesByRequest: {
+            ...state.savedResponsesByRequest,
+            [requestId]: (state.savedResponsesByRequest[requestId] || []).filter(r => r.id !== id)
+        }
+    })),
+
+    removeRequest: (projectId, requestId) => set((state) => ({
+        requestsByProject: {
+            ...state.requestsByProject,
+            [projectId]: (state.requestsByProject[projectId] || []).filter(r => r.id !== requestId)
+        },
+        activeRequestIdByProject: {
+            ...state.activeRequestIdByProject,
+            [projectId]: state.activeRequestIdByProject[projectId] === requestId ? null : state.activeRequestIdByProject[projectId]
+        }
+    })),
 }));

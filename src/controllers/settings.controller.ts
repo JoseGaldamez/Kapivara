@@ -5,19 +5,29 @@ import { toast } from "react-toastify";
 
 class SettingsController {
     private service: SettingsService | null = null;
+    private servicePromise: Promise<SettingsService> | null = null;
 
     private async getService() {
-        if (!this.service) {
-            this.service = await SettingsService.getInstance();
+        if (this.service) return this.service;
+        if (!this.servicePromise) {
+            this.servicePromise = SettingsService.getInstance()
+                .then(s => {
+                    this.service = s;
+                    return s;
+                })
+                .catch(e => {
+                    this.servicePromise = null;
+                    throw e;
+                });
         }
-        return this.service;
+        return this.servicePromise;
     }
 
     public async loadSettings() {
         useSettingsStore.getState().setLoading(true);
-        try {
 
-            const service = await this.getService();
+        try {
+            const service = await this.getService()
             const result = await service.getSettings();
 
             const loadedSettings: Partial<AppSettings> = {};
@@ -25,7 +35,6 @@ class SettingsController {
             result.forEach(item => {
                 const key = item.key as keyof AppSettings;
                 let value: any = item.value;
-
                 // Parse types
                 if (key === 'editor_font_size' || key === 'request_timeout') {
                     value = parseInt(value, 10);
@@ -39,10 +48,10 @@ class SettingsController {
             });
 
             useSettingsStore.getState().setSettings(loadedSettings);
-
         } catch (error) {
             console.error('Failed to load settings:', error);
-            toast.error('Failed to load settings');
+            const message = error instanceof Error ? error.message : String(error);
+            toast.error(`Failed to load settings: ${message}`);
             useSettingsStore.getState().setLoading(false);
         }
     }

@@ -75,6 +75,7 @@ export const CreateRequestModal = ({ isOpen, onClose, onCreate, collectionId }: 
                         <div className="grid grid-cols-4 gap-2">
                             {METHOD_OPTIONS.map((option) => (
                                 <MethodButton
+                                    key={option.value}
                                     value={method}
                                     onChange={setMethod}
                                     option={option}

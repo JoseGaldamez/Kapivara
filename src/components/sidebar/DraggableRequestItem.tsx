@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import { RequestInfo } from "@/types";
 
 interface DraggableRequestItemProps {
@@ -8,6 +8,7 @@ interface DraggableRequestItemProps {
     getRequestSelected: (req: RequestInfo) => string;
     getMethodColor: (method: string) => string;
     indent: boolean;
+    onDeleteRequest: (req: RequestInfo) => void;
 }
 
 export const DraggableRequestItem = ({
@@ -16,6 +17,7 @@ export const DraggableRequestItem = ({
     getRequestSelected,
     getMethodColor,
     indent,
+    onDeleteRequest,
 }: DraggableRequestItemProps) => {
     const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
         id: `request-${req.id}`,
@@ -58,6 +60,13 @@ export const DraggableRequestItem = ({
                 <div className="flex items-center gap-2 truncate w-full">{req.name}</div>
                 <div className="flex flex-row items-center gap-1 shrink-0">
                     {req.is_dirty ? <div className="bg-orange-500 w-2 h-2 rounded-full" /> : null}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteRequest(req); }}
+                        className="opacity-0 group-hover/req:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+                        title="Delete request"
+                    >
+                        <Trash2 size={13} className="pointer-events-none" />
+                    </button>
                     <div
                         {...listeners}
                         {...attributes}

@@ -9,6 +9,8 @@ import { SidebarList } from "@/components/sidebar/SidebarList";
 import { CreateRequestModal } from "../modals/CreateRequestModal";
 import { CreateFolderModal } from "../modals/CreateFolderModal";
 import { toast } from "react-toastify";
+import { ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
+import { SettingsTab } from "./tabs";
 
 interface SidebarProps {
     projectId: string;
@@ -25,6 +27,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
     const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
     const [activeFolderIdForCreate, setActiveFolderIdForCreate] = useState<string | undefined>(undefined);
+    const [envOpen, setEnvOpen] = useState(false);
 
     const { width, sidebarRef, startResizing } = useSidebarResize();
 
@@ -58,6 +61,15 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
         } catch (error) {
             console.error("Error creating folder", error);
             toast.error("Failed to create folder");
+        }
+    };
+
+    const handleDeleteRequest = async (req: RequestInfo) => {
+        try {
+            await requestController.deleteRequest(req.id, projectId);
+            toast.success('Request deleted');
+        } catch {
+            toast.error('Failed to delete request');
         }
     };
 
@@ -101,19 +113,45 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                 onNewFolder={() => openCreateFolderModal()}
             />
 
-            <SidebarList
-                requests={requests}
-                collections={collections}
-                projectId={projectId}
-                activeRequestId={activeRequestId}
-                onSelectRequest={onSelectRequest}
-                expandedFolders={expandedFolders}
-                toggleFolder={toggleFolder}
-                openCreateRequestModal={openCreateRequestModal}
-                openCreateFolderModal={openCreateFolderModal}
-                getMethodColor={getMethodColor}
-                getRequestSelected={getRequestSelected}
-            />
+            {/* Requests list — flex-1 so it compresses when env panel opens */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+                <SidebarList
+                    requests={requests}
+                    collections={collections}
+                    projectId={projectId}
+                    activeRequestId={activeRequestId}
+                    onSelectRequest={onSelectRequest}
+                    onDeleteRequest={handleDeleteRequest}
+                    expandedFolders={expandedFolders}
+                    toggleFolder={toggleFolder}
+                    openCreateRequestModal={openCreateRequestModal}
+                    openCreateFolderModal={openCreateFolderModal}
+                    getMethodColor={getMethodColor}
+                    getRequestSelected={getRequestSelected}
+                />
+            </div>
+
+            {/* ── Environments section ── */}
+            <div className="shrink-0 border-t border-gray-200 dark:border-gray-700">
+                {/* Toggle bar */}
+                <button
+                    onClick={() => setEnvOpen(p => !p)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none"
+                >
+                    <FlaskConical size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />
+                    <span className="flex-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Environments</span>
+                    {envOpen
+                        ? <ChevronDown size={13} className="text-gray-400 shrink-0" />
+                        : <ChevronUp size={13} className="text-gray-400 shrink-0" />}
+                </button>
+
+                {/* Panel */}
+                {envOpen && (
+                    <div className="overflow-y-auto border-t border-gray-100 dark:border-gray-800" style={{ maxHeight: 400 }}>
+                        <SettingsTab projectId={projectId} isFullscreen />
+                    </div>
+                )}
+            </div>
 
             <CreateRequestModal
                 isOpen={isCreateModalOpen}

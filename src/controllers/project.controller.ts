@@ -4,12 +4,16 @@ import { Project } from '../types';
 
 class ProjectController {
     private service: ProjectService | null = null;
+    private servicePromise: Promise<ProjectService> | null = null;
 
     private async getService() {
-        if (!this.service) {
-            this.service = await ProjectService.getInstance();
+        if (this.service) return this.service;
+        if (!this.servicePromise) {
+            this.servicePromise = ProjectService.getInstance()
+                .then(s => { this.service = s; return s; })
+                .catch(e => { this.servicePromise = null; throw e; });
         }
-        return this.service;
+        return this.servicePromise;
     }
 
     public async loadProjects() {

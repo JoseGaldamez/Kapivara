@@ -8,6 +8,7 @@ interface CollectionNodeProps {
     requests: RequestInfo[];
     collections: Collection[];
     onSelectRequest: (req: RequestInfo) => void;
+    onDeleteRequest: (req: RequestInfo) => void;
     getRequestSelected: (req: RequestInfo) => string;
     getMethodColor: (method: string) => string;
     expandedFolders: Record<string, boolean>;
@@ -21,6 +22,7 @@ export const CollectionNode = ({
     requests,
     collections,
     onSelectRequest,
+    onDeleteRequest,
     getRequestSelected,
     getMethodColor,
     expandedFolders,
@@ -89,6 +91,7 @@ export const CollectionNode = ({
                             requests={requests}
                             collections={collections}
                             onSelectRequest={onSelectRequest}
+                            onDeleteRequest={onDeleteRequest}
                             getRequestSelected={getRequestSelected}
                             getMethodColor={getMethodColor}
                             expandedFolders={expandedFolders}
@@ -102,6 +105,7 @@ export const CollectionNode = ({
                             key={req.id}
                             req={req}
                             onSelectRequest={onSelectRequest}
+                            onDeleteRequest={onDeleteRequest}
                             getRequestSelected={getRequestSelected}
                             getMethodColor={getMethodColor}
                             indent={true}

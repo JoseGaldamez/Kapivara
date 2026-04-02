@@ -7,9 +7,19 @@ export interface Project {
     created_at?: string;
 }
 
+export type EnvironmentScope = 'project' | 'global';
+
+export interface EnvironmentVariable {
+    id: string;
+    key: string;
+    value: string;
+    enabled: number;
+}
+
 export interface Environment {
     id: string;
-    project_id: string;
+    project_id?: string | null;
+    scope: EnvironmentScope;
     name: string;
     variables: string; // JSON string
     created_at?: string;
@@ -20,6 +30,18 @@ export interface Collection {
     project_id: string;
     parent_id?: string | null;
     name: string;
+    created_at?: string;
+}
+
+export interface SavedResponse {
+    id: string;
+    request_id: string;
+    name: string;
+    status: number;
+    status_text: string;
+    headers: string; // JSON string
+    body?: string;
+    time_ms: number;
     created_at?: string;
 }
 

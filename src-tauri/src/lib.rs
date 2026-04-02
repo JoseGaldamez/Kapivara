@@ -206,6 +206,18 @@ pub fn run() {
                             sql: include_str!("../migrations/5_add_response_to_requests.sql"),
                             kind: tauri_plugin_sql::MigrationKind::Up,
                         },
+                        tauri_plugin_sql::Migration {
+                            version: 6,
+                            description: "global_environments_and_active_selection",
+                            sql: include_str!("../migrations/6_global_environments_and_active_selection.sql"),
+                            kind: tauri_plugin_sql::MigrationKind::Up,
+                        },
+                        tauri_plugin_sql::Migration {
+                            version: 7,
+                            description: "saved_responses",
+                            sql: include_str!("../migrations/7_saved_responses.sql"),
+                            kind: tauri_plugin_sql::MigrationKind::Up,
+                        },
                     ],
                 )
                 .build(),

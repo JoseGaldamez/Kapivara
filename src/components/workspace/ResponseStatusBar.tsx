@@ -1,10 +1,17 @@
 
 import { RequestInfo } from "@/types";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ChevronsDown, ChevronsUp, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-export const ResponseStatusBar = ({ request }: { request: RequestInfo }) => {
+interface ResponseStatusBarProps {
+    request: RequestInfo;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
+    onSaveResponse?: () => void;
+}
+
+export const ResponseStatusBar = ({ request, isCollapsed = false, onToggleCollapse, onSaveResponse }: ResponseStatusBarProps) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopyResponse = () => {
@@ -36,6 +43,15 @@ export const ResponseStatusBar = ({ request }: { request: RequestInfo }) => {
                         <span className="text-gray-500 dark:text-gray-400">Time: {request.response.time_ms}ms</span>
                     </div>
                     <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
+                    {onSaveResponse && (
+                        <button
+                            onClick={onSaveResponse}
+                            className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                            title="Save Response"
+                        >
+                            <Bookmark size={14} />
+                        </button>
+                    )}
                     <button
                         onClick={handleCopyResponse}
                         className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
@@ -43,6 +59,15 @@ export const ResponseStatusBar = ({ request }: { request: RequestInfo }) => {
                     >
                         {isCopied ? <Check size={14} /> : <Copy size={14} />}
                     </button>
+                    {onToggleCollapse ? (
+                        <button
+                            onClick={onToggleCollapse}
+                            className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                            title={isCollapsed ? "Expand response" : "Collapse response"}
+                        >
+                            {isCollapsed ? <ChevronsUp size={14} /> : <ChevronsDown size={14} />}
+                        </button>
+                    ) : null}
                 </div>
             )}
         </div>

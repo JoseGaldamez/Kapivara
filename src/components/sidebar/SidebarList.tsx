@@ -12,6 +12,7 @@ interface SidebarListProps {
     projectId: string;
     activeRequestId: string | null;
     onSelectRequest: (req: RequestInfo) => void;
+    onDeleteRequest: (req: RequestInfo) => void;
     expandedFolders: Record<string, boolean>;
     toggleFolder: (id: string) => void;
     openCreateRequestModal: (folderId?: string) => void;
@@ -37,6 +38,7 @@ export const SidebarList = ({
     collections,
     projectId,
     onSelectRequest,
+    onDeleteRequest,
     expandedFolders,
     toggleFolder,
     openCreateRequestModal,
@@ -80,6 +82,7 @@ export const SidebarList = ({
                                 requests={requests}
                                 collections={collections}
                                 onSelectRequest={onSelectRequest}
+                                onDeleteRequest={onDeleteRequest}
                                 getRequestSelected={getRequestSelected}
                                 getMethodColor={getMethodColor}
                                 expandedFolders={expandedFolders}
@@ -94,6 +97,7 @@ export const SidebarList = ({
                                 key={req.id}
                                 req={req}
                                 onSelectRequest={onSelectRequest}
+                                onDeleteRequest={onDeleteRequest}
                                 getRequestSelected={getRequestSelected}
                                 getMethodColor={getMethodColor}
                                 indent={false}
