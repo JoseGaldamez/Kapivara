@@ -144,11 +144,11 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
         <div
             ref={sidebarRef}
             style={{ width: `${width}px` }}
-            className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-colors relative shrink-0 overflow-x-hidden"
+            className="flex flex-col h-full bg-white dark:bg-[#16161E] rounded-2xl border border-slate-200/50 dark:border-slate-800/40 shadow-sm relative shrink-0 transition-colors overflow-hidden"
         >
-            {/* Resize handle */}
+            {/* Resizer EW cushioned line */}
             <div
-                className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[#0E61B1]/50 z-10 transition-colors"
+                className="absolute top-0 right-0 w-[1px] h-full bg-slate-200 dark:bg-slate-800/80 cushioned-resizer-ew z-10 transition-colors hover:bg-[#0E61B1]/60"
                 onMouseDown={startResizing}
             />
 
@@ -178,7 +178,7 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
             </div>
 
             {/* ── Environment Quick status widget ── */}
-            <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0b0f19]/40 p-3.5 flex flex-col gap-2 transition-colors relative" ref={dropdownRef}>
+            <div className="shrink-0 border-t border-slate-200/50 dark:border-slate-800/40 bg-slate-50 dark:bg-[#0D0D11]/60 p-3.5 flex flex-col gap-2 transition-colors relative" ref={dropdownRef}>
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                         Environment

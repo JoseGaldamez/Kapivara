@@ -21,18 +21,18 @@ export const Workspace = ({ project }: WorkspaceProps) => {
     , [requests, activeRequestId]);
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full p-2 gap-2 bg-[#F5F5F7] dark:bg-[#0D0D11] transition-colors overflow-hidden">
             <Sidebar
                 projectId={project.uid}
                 activeRequestId={activeRequestId}
                 onSelectRequest={(req) => setActiveRequest(project.uid, req.id)}
             />
-            <div className="flex-1 bg-white dark:bg-gray-900 flex flex-col h-full overflow-hidden transition-colors">
+            <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
                 <div className="flex-1 min-h-0 overflow-hidden">
                     {activeRequest ? (
                         <RequestPanel key={activeRequest.id} request={activeRequest} />
                     ) : (
-                        <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-600 text-sm">
+                        <div className="h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-[#16161E] rounded-2xl border border-slate-200/50 dark:border-slate-800/40 shadow-sm">
                             Select a request to get started
                         </div>
                     )}

@@ -68,13 +68,13 @@ export const SidebarList = ({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 transition-colors">
+            <div className="p-2 transition-colors">
                 {requests.length === 0 && collections.length === 0 ? (
                     <div className="text-xs text-gray-500 dark:text-gray-500 text-center mt-4">
                         No requests or folders yet. <br /> Create one to get started!
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-1 min-h-full pb-2">
+                    <div className="flex flex-col gap-1 min-h-full pb-32">
                         {rootCollections.map((collection) => (
                             <CollectionNode
                                 key={collection.id}

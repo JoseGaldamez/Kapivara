@@ -26,10 +26,10 @@ export const VarBadge = ({ name, exists, resolvedValue, onClickMissing, onClickE
                 onMouseLeave={handleMouseLeave}
                 onClick={exists ? onClickExists : onClickMissing}
                 title={exists ? 'Click to edit this variable' : 'Click to add this variable'}
-                className={`px-1.5 py-0.5 rounded border text-xs font-mono select-none inline-block ${
+                className={`px-2 py-0.5 rounded-md border text-[11px] font-mono select-none inline-block transition-all duration-200 ${
                     exists
-                        ? 'bg-violet-50 dark:bg-violet-900/25 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 cursor-pointer hover:bg-violet-100 dark:hover:bg-violet-900/40'
-                        : 'bg-red-50 dark:bg-red-900/25 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/40'
+                        ? 'bg-violet-50/80 backdrop-blur-md border-violet-200/60 text-violet-700 dark:bg-violet-950/35 dark:border-violet-800/40 dark:text-violet-300 cursor-pointer hover:bg-violet-100/90 dark:hover:bg-violet-900/40 hover:shadow-[0_0_10px_rgba(167,139,250,0.35)]'
+                        : 'bg-rose-50/80 backdrop-blur-md border-rose-200/60 text-rose-600 dark:bg-rose-950/35 dark:border-rose-900/30 dark:text-rose-400 cursor-pointer hover:bg-rose-100/90 dark:hover:bg-rose-900/40 hover:shadow-[0_0_10px_rgba(251,113,133,0.35)]'
                 }`}
                 style={{ pointerEvents: 'auto' }}
             >

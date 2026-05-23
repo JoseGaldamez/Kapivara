@@ -176,16 +176,16 @@ export const FormRequestSection = ({
     };
 
     return (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/50 bg-white dark:bg-[#16161E] transition-colors">
             <div className="flex gap-2">
-                <div className="flex-1 flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-transparent focus-within:border-blue-500 focus-within:bg-white dark:focus-within:bg-gray-900 transition-all min-w-0">
+                <div className="flex-1 flex items-center bg-slate-50 dark:bg-slate-900/60 rounded-xl p-1 border border-slate-200/60 dark:border-slate-800/50 focus-within:border-[#0E61B1] dark:focus-within:border-blue-500/80 focus-within:bg-white dark:focus-within:bg-[#0D0D11] focus-within:shadow-[0_0_12px_rgba(14,97,177,0.1)] dark:focus-within:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all min-w-0">
                     <Select
                         value={method}
                         onChange={handleMethodChange}
                         options={METHOD_OPTIONS}
                         className="w-28 font-bold text-sm"
                     />
-                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
                     {/* URL area: editable input or highlighted overlay */}
                     <div
@@ -203,7 +203,7 @@ export const FormRequestSection = ({
                             onBlur={() => setIsFocused(false)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
                             placeholder="Enter request URL"
-                            className={`w-full bg-transparent text-sm focus:outline-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
+                            className={`w-full bg-transparent text-sm focus:outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${
                                 !isFocused ? 'opacity-0 pointer-events-none absolute inset-0 h-full' : ''
                             }`}
                         />
@@ -232,13 +232,19 @@ export const FormRequestSection = ({
                 <button
                     onClick={handleSend}
                     disabled={isLoading}
-                    className="bg-[#0E61B1] text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-[#0E61B1]/90 shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className={`bg-[#0E61B1] text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0E61B1]/90 hover:scale-[1.015] active:scale-95 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                        isLoading ? 'animate-pulse-breathe' : ''
+                    }`}
                 >
                     <Play size={16} fill="currentColor" /> {isLoading ? "Sending..." : "Send"}
                 </button>
                 <button
                     onClick={handleSave}
-                    className={`p-2 rounded-lg transition-colors cursor-pointer relative ${isDirty ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0E61B1] dark:hover:text-[#0E61B1]'}`}
+                    className={`p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer relative border ${
+                        isDirty 
+                            ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 border-orange-250/30 dark:border-orange-900/30' 
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-[#0E61B1] dark:hover:text-blue-400 border-transparent hover:border-slate-200/50 dark:hover:border-slate-700/30'
+                    }`}
                     title="Save Request"
                 >
                     <Save size={20} />

@@ -8,11 +8,8 @@ import { JsonViewer } from "./JsonViewer";
 import { FormRequestSection } from "./FormRequestSection";
 import { SavedResponsesPanel } from "./SavedResponsesPanel";
 import { SaveResponseModal } from "../modals/SaveResponseModal";
-import { ManageEnvironmentsModal } from "../modals/ManageEnvironmentsModal";
-import { toast } from "react-toastify";
-import { Edit2, AlertCircle, Info, Sliders } from "lucide-react";
+import { Edit2, AlertCircle, Info } from "lucide-react";
 import { ResponseStatusBar } from "./ResponseStatusBar";
-import { Select } from "@/components/common/Select";
 
 // Tabs
 import {
@@ -22,6 +19,7 @@ import {
     BodyTab,
     Tabs
 } from "./tabs";
+import { toast } from "react-toastify";
 
 
 interface RequestPanelProps {
@@ -73,7 +71,6 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
     const [responseHeight, setResponseHeight] = useState(300);
     const [isDragging, setIsDragging] = useState(false);
-    const [isEnvModalOpen, setIsEnvModalOpen] = useState(false);
     const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
     const [resolvedVariables, setResolvedVariables] = useState<Record<string, string>>({});
     const [responseViewTab, setResponseViewTab] = useState<'response' | 'preview' | 'saved'>('response');
@@ -338,10 +335,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
         }
     };
 
-    const handleProjectEnvironmentChange = async (value: string) => {
-        const nextId = value === '__none__' ? null : value;
-        await environmentController.setActiveEnvironment('project', nextId, request.project_id);
-    };
+
 
     // Keyboard shortcuts Ctrl + S to save
     useEffect(() => {
@@ -357,7 +351,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     }, [handleSave]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-900 relative transition-colors">
+        <div className="flex flex-col h-full bg-white dark:bg-[#16161E] relative transition-colors rounded-2xl border border-slate-200/50 dark:border-slate-800/40 shadow-sm overflow-hidden">
 
             {/* Editable Title Section */}
             <div className="flex items-center gap-3 px-4 pt-4 pb-2 min-w-0">
@@ -382,29 +376,6 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                 )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
-                    <div className="w-52">
-                        <Select
-                            value={activeProjectEnvironmentId || '__none__'}
-                            onChange={handleProjectEnvironmentChange}
-                            options={[
-                                { value: '__none__', label: 'Env: None' },
-                                ...projectEnvironments.map((environment) => ({
-                                    value: environment.id,
-                                    label: `Env: ${environment.name}`
-                                }))
-                            ]}
-                            className="w-full"
-                        />
-                    </div>
-                    <button
-                        onClick={() => setIsEnvModalOpen(true)}
-                        className="h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                        title="Configure environment variables"
-                    >
-                        <Sliders size={16} />
-                    </button>
-                </div>
             </div>
 
             <FormRequestSection
@@ -453,12 +424,18 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             {/* Resizer */}
             {!isResponseCollapsed ? (
                 <div
-                    className={`w-full h-1 bg-gray-200 dark:bg-gray-700 cursor-ns-resize hover:bg-blue-500 transition-colors ${isDragging ? "bg-blue-500" : ""}`}
+                    className={`w-full h-[1px] bg-slate-200 dark:bg-slate-800/80 cushioned-resizer-ns transition-colors ${isDragging ? "bg-[#0E61B1]" : "hover:bg-[#0E61B1]/60"}`}
                     onMouseDown={() => setIsDragging(true)}
-                />
+                >
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-1 z-55 pointer-events-none opacity-40 hover:opacity-100 transition-opacity">
+                        <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500" />
+                        <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500" />
+                        <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    </div>
+                </div>
             ) : null}
 
-            <div style={{ height: isResponseCollapsed ? 40 : responseHeight }} className="shrink-0 flex flex-col bg-gray-50 dark:bg-[#0d1117] border-t border-gray-200 dark:border-gray-800">
+            <div style={{ height: isResponseCollapsed ? 42 : responseHeight }} className="shrink-0 flex flex-col bg-slate-50 dark:bg-[#0D0D11] border-t border-slate-200/50 dark:border-slate-800/40">
                 <ResponseStatusBar
                     request={request}
                     isCollapsed={isResponseCollapsed}
@@ -508,21 +485,24 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                         ) : (
                             /* ── Normal response: tab bar + content ── */
                             <>
-                                {/* Tab bar */}
-                                <div className="flex items-center gap-1 px-4 pt-2 pb-0 shrink-0 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117]">
-                                    {(['response', 'preview', 'saved'] as const).map((tab) => (
-                                        <button
-                                            key={tab}
-                                            onClick={() => setResponseViewTab(tab)}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-t capitalize transition-colors ${
-                                                responseViewTab === tab
-                                                    ? 'bg-white dark:bg-gray-900 text-[#0E61B1] border border-b-white dark:border-gray-700 dark:border-b-gray-900 -mb-px'
-                                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                                            }`}
-                                        >
-                                            {tab === 'saved' ? `Saved${savedResponses.length > 0 ? ` (${savedResponses.length})` : ''}` : tab === 'response' ? 'Response' : 'Preview'}
-                                        </button>
-                                    ))}
+                                {/* Segmented capsule response tabs */}
+                                <div className="flex items-center p-0.5 bg-slate-200/60 dark:bg-slate-900 rounded-xl my-2 mx-4 gap-0.5 self-start shadow-inner border border-slate-200/20 dark:border-slate-800/30">
+                                    {(['response', 'preview', 'saved'] as const).map((tab) => {
+                                        const isActive = responseViewTab === tab;
+                                        return (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setResponseViewTab(tab)}
+                                                className={`px-4 py-1 text-xs font-bold rounded-lg capitalize transition-all duration-200 cursor-pointer ${
+                                                    isActive
+                                                        ? 'bg-white dark:bg-[#16161E] text-[#0E61B1] dark:text-blue-450 shadow-sm border border-slate-200/30 dark:border-slate-700/20'
+                                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                                }`}
+                                            >
+                                                {tab === 'saved' ? `Saved${savedResponses.length > 0 ? ` (${savedResponses.length})` : ''}` : tab === 'response' ? 'Response' : 'Preview'}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Content */}
@@ -563,11 +543,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                 onConfirm={handleSaveResponse}
             />
 
-            <ManageEnvironmentsModal
-                isOpen={isEnvModalOpen}
-                onClose={() => setIsEnvModalOpen(false)}
-                projectId={request.project_id}
-            />
+
         </div>
     );
 };
