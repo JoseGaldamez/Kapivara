@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
     X, Plus, Trash2, Edit3, Save, Globe, FolderKanban, 
-    Layers, Sliders, ToggleLeft, ToggleRight, Info, AlertCircle 
+    Layers, Sliders, ToggleLeft, ToggleRight, AlertCircle 
 } from "lucide-react";
 import { Environment, EnvironmentScope, EnvironmentVariable } from "@/types";
 import { useEnvironmentStore } from "@/stores/environment.store";
