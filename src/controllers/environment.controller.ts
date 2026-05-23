@@ -100,7 +100,36 @@ class EnvironmentController {
 
     public async createEnvironment(scope: EnvironmentScope, name: string, projectId?: string) {
         const service = await this.getService();
+
+        // Find existing keys to populate empty rows in the new environment
+        const store = useEnvironmentStore.getState();
+        const existingEnvironments = (scope === 'project' && projectId)
+            ? (store.projectEnvironmentsByProject[projectId] || [])
+            : store.globalEnvironments;
+
+        const uniqueKeys = new Set<string>();
+        existingEnvironments.forEach(env => {
+            const parsed = this.parseEnvironmentVariables(env);
+            parsed.forEach(v => {
+                if (v.key.trim() !== '') {
+                    uniqueKeys.add(v.key.trim());
+                }
+            });
+        });
+
+        const initialVars: EnvironmentVariable[] = Array.from(uniqueKeys).map(key => ({
+            id: crypto.randomUUID(),
+            key,
+            value: '',
+            enabled: 1
+        }));
+
         const created = await service.createEnvironment(scope, name.trim(), projectId);
+
+        if (initialVars.length > 0) {
+            await service.updateEnvironmentVariables(scope, created.id, JSON.stringify(initialVars));
+            created.variables = JSON.stringify(initialVars);
+        }
 
         if (scope === 'project' && projectId) {
             await Promise.all([
@@ -130,8 +159,59 @@ class EnvironmentController {
 
     public async updateEnvironmentVariables(scope: EnvironmentScope, environmentId: string, variables: EnvironmentVariable[], projectId?: string) {
         const service = await this.getService();
-        await service.updateEnvironmentVariables(scope, environmentId, JSON.stringify(variables));
 
+        // 1. Get all existing environments of this scope
+        const store = useEnvironmentStore.getState();
+        const environments = (scope === 'project' && projectId)
+            ? (store.projectEnvironmentsByProject[projectId] || [])
+            : store.globalEnvironments;
+
+        // 2. Identify the environment being updated and find any newly added keys
+        const oldEnvironment = environments.find(env => env.id === environmentId);
+        const oldVars = this.parseEnvironmentVariables(oldEnvironment);
+        const oldKeys = new Set(oldVars.map(v => v.key.trim()).filter(k => k !== ''));
+
+        const newKeys = new Set(variables.map(v => v.key.trim()).filter(k => k !== ''));
+        const addedKeys = Array.from(newKeys).filter(key => !oldKeys.has(key));
+
+        const dbUpdates: Promise<void>[] = [];
+
+        // 3. Save the new variables for the edited environment
+        dbUpdates.push(service.updateEnvironmentVariables(scope, environmentId, JSON.stringify(variables)));
+
+        // 4. If new keys were added, propagate them to all other environments of the same scope as empty values
+        if (addedKeys.length > 0) {
+            environments.forEach(env => {
+                if (env.id !== environmentId) {
+                    const envVars = this.parseEnvironmentVariables(env);
+                    const existingKeys = new Set(envVars.map(v => v.key.trim()).filter(k => k !== ''));
+
+                    const nextVars = [...envVars];
+                    let updated = false;
+
+                    addedKeys.forEach(key => {
+                        if (!existingKeys.has(key)) {
+                            nextVars.push({
+                                id: crypto.randomUUID(),
+                                key,
+                                value: '',
+                                enabled: 1
+                            });
+                            updated = true;
+                        }
+                    });
+
+                    if (updated) {
+                        dbUpdates.push(service.updateEnvironmentVariables(scope, env.id, JSON.stringify(nextVars)));
+                    }
+                }
+            });
+        }
+
+        // Wait for all database operations to complete
+        await Promise.all(dbUpdates);
+
+        // 5. Reload the store environments to update UI
         if (scope === 'project' && projectId) {
             await this.loadProjectEnvironments(projectId);
         } else {
@@ -144,19 +224,25 @@ class EnvironmentController {
         await service.deleteEnvironment(scope, environmentId);
 
         if (scope === 'project' && projectId) {
+            // Load remaining project environments into store first
+            const freshEnvs = await this.loadProjectEnvironments(projectId);
+            
             const active = useEnvironmentStore.getState().activeProjectEnvironmentIdByProject[projectId];
             if (active === environmentId) {
-                await this.setActiveEnvironment('project', null, projectId);
+                const fallbackId = freshEnvs.length > 0 ? freshEnvs[0].id : null;
+                await this.setActiveEnvironment('project', fallbackId, projectId);
             }
-            await this.loadProjectEnvironments(projectId);
             return;
         }
 
+        // Load remaining global environments into store first
+        const freshEnvs = await this.loadGlobalEnvironments();
+
         const activeGlobal = useEnvironmentStore.getState().activeGlobalEnvironmentId;
         if (activeGlobal === environmentId) {
-            await this.setActiveEnvironment('global', null);
+            const fallbackId = freshEnvs.length > 0 ? freshEnvs[0].id : null;
+            await this.setActiveEnvironment('global', fallbackId);
         }
-        await this.loadGlobalEnvironments();
     }
 
     public async setActiveEnvironment(scope: EnvironmentScope, environmentId: string | null, projectId?: string) {

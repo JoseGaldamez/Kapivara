@@ -318,7 +318,6 @@ export const SettingsTab = ({ projectId, request, isFullscreen = false }: Settin
             try {
                 isBootstrappingRef.current = true;
                 await environmentController.bootstrap(projectId);
-                await refreshResolvedVariables();
                 bootstrappedProjectIdRef.current = projectId;
             } catch (error) {
                 console.error('Failed to bootstrap environments:', error);
@@ -329,6 +328,10 @@ export const SettingsTab = ({ projectId, request, isFullscreen = false }: Settin
 
         bootstrap();
     }, [projectId]);
+
+    useEffect(() => {
+        refreshResolvedVariables();
+    }, [projectId, activeProjectEnvironmentId, activeGlobalEnvironmentId, projectEnvironments, globalEnvironments]);
 
     const resolvedUrlPreview = request?.url ? resolveTemplateString(request.url, resolvedVariables) : '';
 

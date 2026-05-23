@@ -7,9 +7,10 @@ import { environmentController } from "@/controllers/environment.controller";
 import { JsonViewer } from "./JsonViewer";
 import { FormRequestSection } from "./FormRequestSection";
 import { SavedResponsesPanel } from "./SavedResponsesPanel";
-import { SaveResponseModal } from "@/components/modals";
+import { SaveResponseModal } from "../modals/SaveResponseModal";
+import { ManageEnvironmentsModal } from "../modals/ManageEnvironmentsModal";
 import { toast } from "react-toastify";
-import { Edit2, AlertCircle, Info, PanelsRightBottom, PanelsTopLeft } from "lucide-react";
+import { Edit2, AlertCircle, Info, Sliders } from "lucide-react";
 import { ResponseStatusBar } from "./ResponseStatusBar";
 import { Select } from "@/components/common/Select";
 
@@ -19,7 +20,6 @@ import {
     AuthorizationTab,
     HeadersTab,
     BodyTab,
-    SettingsTab,
     Tabs
 } from "./tabs";
 
@@ -73,7 +73,7 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
     const [responseHeight, setResponseHeight] = useState(300);
     const [isDragging, setIsDragging] = useState(false);
-    const [isEnvironmentPanelVisible, setIsEnvironmentPanelVisible] = useState(false);
+    const [isEnvModalOpen, setIsEnvModalOpen] = useState(false);
     const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
     const [resolvedVariables, setResolvedVariables] = useState<Record<string, string>>({});
     const [responseViewTab, setResponseViewTab] = useState<'response' | 'preview' | 'saved'>('response');
@@ -97,25 +97,16 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
 
 
     useEffect(() => {
-        const loadEnvironments = async () => {
-            await environmentController.bootstrap(request.project_id);
-            const nextVariables = await environmentController.getResolvedVariables(request.project_id);
-            setResolvedVariables(nextVariables);
-        };
-
-        loadEnvironments();
+        environmentController.bootstrap(request.project_id);
     }, [request.project_id]);
 
     useEffect(() => {
-        const refreshVariables = async () => {
-            await environmentController.loadProjectEnvironments(request.project_id);
-            await environmentController.loadGlobalEnvironments();
+        const syncVariables = async () => {
             const nextVariables = await environmentController.getResolvedVariables(request.project_id);
             setResolvedVariables(nextVariables);
         };
-
-        refreshVariables();
-    }, [request.project_id, activeProjectEnvironmentId, activeGlobalEnvironmentId]);
+        syncVariables();
+    }, [request.project_id, activeProjectEnvironmentId, activeGlobalEnvironmentId, projectEnvironments, globalEnvironments]);
 
     useEffect(() => {
         setMethod(request.method || "GET");
@@ -350,10 +341,6 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
     const handleProjectEnvironmentChange = async (value: string) => {
         const nextId = value === '__none__' ? null : value;
         await environmentController.setActiveEnvironment('project', nextId, request.project_id);
-        await environmentController.loadProjectEnvironments(request.project_id);
-        await environmentController.loadGlobalEnvironments();
-        const nextVariables = await environmentController.getResolvedVariables(request.project_id);
-        setResolvedVariables(nextVariables);
     };
 
     // Keyboard shortcuts Ctrl + S to save
@@ -411,11 +398,11 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                         />
                     </div>
                     <button
-                        onClick={() => setIsEnvironmentPanelVisible((prev) => !prev)}
+                        onClick={() => setIsEnvModalOpen(true)}
                         className="h-10 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                        title={isEnvironmentPanelVisible ? 'Ocultar panel de environments' : 'Mostrar panel de environments'}
+                        title="Configure environment variables"
                     >
-                        {isEnvironmentPanelVisible ? <PanelsRightBottom size={16} /> : <PanelsTopLeft size={16} />}
+                        <Sliders size={16} />
                     </button>
                 </div>
             </div>
@@ -444,27 +431,23 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
             />
 
             <div className="flex-1 min-h-0 flex overflow-hidden">
-                {isEnvironmentPanelVisible ? (
-                    <div className="flex-1 overflow-y-auto bg-gray-50/30 dark:bg-gray-900/30">
-                        <SettingsTab projectId={request.project_id} request={request} isFullscreen />
-                    </div>
-                ) : (
-                    <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                        <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
+                <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+                    <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-                        <div className="flex-1 p-4 overflow-y-auto">
-                            {activeTab === "Query Params" && <QueryParamsTab params={queryParams} onUpdate={handleUpdateParams} />}
-                            {activeTab === "Authorization" && <AuthorizationTab auth={auth} onUpdate={handleAuthChange} />}
-                            {activeTab === "Headers" && <HeadersTab headers={headers} onUpdate={handleUpdateHeaders} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
-                            {activeTab === "Body" && <BodyTab
-                                body={body}
-                                setBody={handleBodyChange}
-                                bodyType={bodyType}
-                                setBodyType={handleBodyTypeChange}
-                            />}
-                        </div>
+                    <div className="flex-1 p-4 overflow-y-auto">
+                        {activeTab === "Query Params" && <QueryParamsTab params={queryParams} onUpdate={handleUpdateParams} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
+                        {activeTab === "Authorization" && <AuthorizationTab auth={auth} onUpdate={handleAuthChange} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
+                        {activeTab === "Headers" && <HeadersTab headers={headers} onUpdate={handleUpdateHeaders} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
+                        {activeTab === "Body" && <BodyTab
+                            body={body}
+                            setBody={handleBodyChange}
+                            bodyType={bodyType}
+                            setBodyType={handleBodyTypeChange}
+                            variableKeys={Object.keys(resolvedVariables)}
+                            variablePreview={resolvedVariables}
+                        />}
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Resizer */}
@@ -578,6 +561,12 @@ export const RequestPanel = ({ request }: RequestPanelProps) => {
                 defaultName={`${request.name} - ${new Date().toLocaleTimeString()}`}
                 onClose={() => setIsSaveModalOpen(false)}
                 onConfirm={handleSaveResponse}
+            />
+
+            <ManageEnvironmentsModal
+                isOpen={isEnvModalOpen}
+                onClose={() => setIsEnvModalOpen(false)}
+                projectId={request.project_id}
             />
         </div>
     );

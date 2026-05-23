@@ -8,7 +8,8 @@ import { projectController } from "@/controllers/project.controller"
 // Components
 import { NewProjectCard } from "./NewProjectCard"
 import { ProjectCard } from "./ProjectCard"
-import { CreateProjectModal, DeleteProjectModal } from "../modals"
+import { CreateProjectModal } from "../modals/CreateProjectModal";
+import { DeleteProjectModal } from "../modals/DeleteProjectModal";
 
 interface ContainerListProjectsProps {
     searchFilter?: string;

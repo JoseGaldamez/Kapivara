@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRequestStore } from "@/stores/request.store";
 import { RequestInfo } from "@/types";
 import { METHODS_COLORS } from "@/utils/methods.constants";
@@ -9,8 +9,10 @@ import { SidebarList } from "@/components/sidebar/SidebarList";
 import { CreateRequestModal } from "../modals/CreateRequestModal";
 import { CreateFolderModal } from "../modals/CreateFolderModal";
 import { toast } from "react-toastify";
-import { ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
-import { SettingsTab } from "./tabs";
+import { Sliders, ChevronDown, Globe, FolderKanban } from "lucide-react";
+import { useEnvironmentStore } from "@/stores/environment.store";
+import { environmentController } from "@/controllers/environment.controller";
+import { ManageEnvironmentsModal } from "../modals/ManageEnvironmentsModal";
 
 interface SidebarProps {
     projectId: string;
@@ -20,6 +22,7 @@ interface SidebarProps {
 
 const EMPTY_REQUESTS: RequestInfo[] = [];
 const EMPTY_COLLECTIONS: [] = [];
+const EMPTY_ENVIRONMENTS: any[] = [];
 
 export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: SidebarProps) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -27,12 +30,55 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
     const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
     const [activeFolderIdForCreate, setActiveFolderIdForCreate] = useState<string | undefined>(undefined);
-    const [envOpen, setEnvOpen] = useState(false);
+    const [isEnvModalOpen, setIsEnvModalOpen] = useState(false);
+    const [resolvedVariables, setResolvedVariables] = useState<Record<string, string>>({});
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const { width, sidebarRef, startResizing } = useSidebarResize();
 
     const requests = useRequestStore((state) => state.requestsByProject[projectId] ?? EMPTY_REQUESTS);
     const collections = useRequestStore((state) => state.collectionsByProject?.[projectId] ?? EMPTY_COLLECTIONS);
+
+    const projectEnvironments = useEnvironmentStore((state) => state.projectEnvironmentsByProject[projectId] ?? EMPTY_ENVIRONMENTS);
+    const globalEnvironments = useEnvironmentStore((state) => state.globalEnvironments ?? EMPTY_ENVIRONMENTS);
+    const activeProjectEnvId = useEnvironmentStore((state) => state.activeProjectEnvironmentIdByProject[projectId] ?? null);
+    const activeGlobalEnvId = useEnvironmentStore((state) => state.activeGlobalEnvironmentId ?? null);
+
+    // Sync resolved variables in real-time
+    useEffect(() => {
+        const syncVariables = async () => {
+            await environmentController.bootstrap(projectId);
+            const resolved = await environmentController.getResolvedVariables(projectId);
+            setResolvedVariables(resolved);
+        };
+        if (projectId) {
+            syncVariables();
+        }
+    }, [projectId, activeProjectEnvId, activeGlobalEnvId, projectEnvironments, globalEnvironments]);
+
+    // Find active environment name
+    const activeEnvName = useMemo(() => {
+        if (activeProjectEnvId) {
+            const env = projectEnvironments.find(e => e.id === activeProjectEnvId);
+            if (env) return env.name;
+        }
+        if (activeGlobalEnvId) {
+            const env = globalEnvironments.find(e => e.id === activeGlobalEnvId);
+            if (env) return `${env.name} (Global)`;
+        }
+        return null;
+    }, [activeProjectEnvId, activeGlobalEnvId, projectEnvironments, globalEnvironments]);
 
     useEffect(() => {
         if (requests.length === 0 && collections.length === 0 && projectId) {
@@ -131,26 +177,161 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                 />
             </div>
 
-            {/* ── Environments section ── */}
-            <div className="shrink-0 border-t border-gray-200 dark:border-gray-700">
-                {/* Toggle bar */}
-                <button
-                    onClick={() => setEnvOpen(p => !p)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none"
-                >
-                    <FlaskConical size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />
-                    <span className="flex-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Environments</span>
-                    {envOpen
-                        ? <ChevronDown size={13} className="text-gray-400 shrink-0" />
-                        : <ChevronUp size={13} className="text-gray-400 shrink-0" />}
-                </button>
+            {/* ── Environment Quick status widget ── */}
+            <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0b0f19]/40 p-3.5 flex flex-col gap-2 transition-colors relative" ref={dropdownRef}>
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        Environment
+                    </span>
+                    <button
+                        onClick={() => setIsEnvModalOpen(true)}
+                        className="flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 hover:underline cursor-pointer transition-colors"
+                    >
+                        <Sliders size={11} />
+                        Manage
+                    </button>
+                </div>
 
-                {/* Panel */}
-                {envOpen && (
-                    <div className="overflow-y-auto border-t border-gray-100 dark:border-gray-800" style={{ maxHeight: 400 }}>
-                        <SettingsTab projectId={projectId} isFullscreen />
+                <div className="relative">
+                    <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/80 rounded-xl text-left cursor-pointer transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                activeEnvName 
+                                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse' 
+                                    : 'bg-orange-400'
+                            }`} />
+                            <span className={`text-xs font-semibold truncate ${
+                                activeEnvName 
+                                    ? 'text-gray-700 dark:text-gray-200' 
+                                    : 'text-gray-400 dark:text-gray-500 italic'
+                            }`}>
+                                {activeEnvName || "No active environment"}
+                            </span>
+                        </div>
+                        <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 shrink-0 ml-1 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isDropdownOpen && (
+                        <div className="absolute bottom-full left-0 right-0 mb-1.5 z-40 rounded-xl border border-gray-200 dark:border-gray-850 bg-white dark:bg-[#0b0f19] shadow-xl p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 max-h-72 overflow-y-auto">
+                            <button
+                                onClick={async () => {
+                                    await environmentController.setActiveEnvironment('project', null, projectId);
+                                    await environmentController.setActiveEnvironment('global', null);
+                                    setIsDropdownOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-orange-650 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 cursor-pointer transition-colors flex items-center justify-between"
+                            >
+                                <span>No Active Environment</span>
+                                {(!activeProjectEnvId && !activeGlobalEnvId) && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                )}
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100 dark:border-gray-800/60" />
+
+                            <div className="px-3 py-1">
+                                <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-450 dark:text-gray-550 flex items-center gap-1.5 select-none">
+                                    <FolderKanban size={10} className="text-blue-500" />
+                                    Project Scope
+                                </span>
+                            </div>
+
+                            <div className="space-y-0.5">
+                                {projectEnvironments.map((env) => {
+                                    const isActive = activeProjectEnvId === env.id;
+                                    return (
+                                        <button
+                                            key={env.id}
+                                            onClick={async () => {
+                                                await environmentController.setActiveEnvironment('project', isActive ? null : env.id, projectId);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors flex items-center justify-between ${
+                                                isActive 
+                                                    ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400' 
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-900/40 text-gray-700 dark:text-gray-300'
+                                            }`}
+                                        >
+                                            <span className="truncate">{env.name}</span>
+                                            {isActive && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                                {projectEnvironments.length === 0 && (
+                                    <span className="block px-3 py-1 text-[11px] text-gray-400 dark:text-gray-500 italic select-none">
+                                        No project environments
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="my-1 border-t border-gray-100 dark:border-gray-800/60" />
+
+                            <div className="px-3 py-1">
+                                <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-450 dark:text-gray-550 flex items-center gap-1.5 select-none">
+                                    <Globe size={10} className="text-violet-500" />
+                                    Global Scope
+                                </span>
+                            </div>
+
+                            <div className="space-y-0.5">
+                                {globalEnvironments.map((env) => {
+                                    const isActive = activeGlobalEnvId === env.id;
+                                    return (
+                                        <button
+                                            key={env.id}
+                                            onClick={async () => {
+                                                await environmentController.setActiveEnvironment('global', isActive ? null : env.id);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors flex items-center justify-between ${
+                                                isActive 
+                                                    ? 'bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400' 
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-900/40 text-gray-700 dark:text-gray-300'
+                                            }`}
+                                        >
+                                            <span className="truncate">{env.name}</span>
+                                            {isActive && (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                                {globalEnvironments.length === 0 && (
+                                    <span className="block px-3 py-1 text-[11px] text-gray-400 dark:text-gray-500 italic select-none">
+                                        No global environments
+                                    </span>
+                                )}
+                            </div>
+
+                        </div>
+                    )}
+                </div>
+
+                {/* Variable Previews Tag Grid */}
+                <div className="mt-1">
+                    <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto pr-1">
+                        {Object.keys(resolvedVariables).length > 0 ? (
+                            Object.keys(resolvedVariables).map((key) => (
+                                <span 
+                                    key={key} 
+                                    title={`${key}: ${resolvedVariables[key]}`}
+                                    className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 text-[#0E61B1] dark:text-blue-400 border border-blue-100/50 dark:border-blue-900/30 truncate max-w-[120px] select-none"
+                                >
+                                    {key}
+                                </span>
+                            ))
+                        ) : (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 italic select-none">
+                                No active variables
+                            </span>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
 
             <CreateRequestModal
@@ -165,6 +346,12 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                 onClose={() => setIsCreateFolderModalOpen(false)}
                 onCreate={(name, parentId) => handleCreateFolder(name, parentId)}
                 parentId={activeFolderIdForCreate}
+            />
+
+            <ManageEnvironmentsModal
+                isOpen={isEnvModalOpen}
+                onClose={() => setIsEnvModalOpen(false)}
+                projectId={projectId}
             />
         </div>
     );

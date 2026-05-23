@@ -9,6 +9,8 @@ interface BodyTabProps {
     setBody: (body: string) => void;
     bodyType: string;
     setBodyType: (type: any) => void;
+    variableKeys?: string[];
+    variablePreview?: Record<string, string>;
 }
 
 type BodyType = 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
@@ -21,7 +23,7 @@ const BODY_TYPES: { id: BodyType; label: string }[] = [
     { id: 'raw', label: 'Raw' },
 ];
 
-export const BodyTab = ({ body, setBody, bodyType, setBodyType }: BodyTabProps) => {
+export const BodyTab = ({ body, setBody, bodyType, setBodyType, variableKeys = [], variablePreview = {} }: BodyTabProps) => {
 
     const handleTypeChange = (newType: BodyType) => {
         // When switching to JSON, try to pretty-print the current body
@@ -60,8 +62,8 @@ export const BodyTab = ({ body, setBody, bodyType, setBodyType }: BodyTabProps) 
             <div className="flex-1">
                 {bodyType === 'none' && <NoneType />}
                 {bodyType === 'json' && <JsonType value={body} onChange={setBody} />}
-                {bodyType === 'form-data' && <FormDataType value={body} onChange={setBody} />}
-                {bodyType === 'x-www-form-urlencoded' && <UrlEncodedType value={body} onChange={setBody} />}
+                {bodyType === 'form-data' && <FormDataType value={body} onChange={setBody} variableKeys={variableKeys} variablePreview={variablePreview} />}
+                {bodyType === 'x-www-form-urlencoded' && <UrlEncodedType value={body} onChange={setBody} variableKeys={variableKeys} variablePreview={variablePreview} />}
                 {bodyType === 'raw' && <RawType value={body} onChange={setBody} />}
             </div>
         </div>
