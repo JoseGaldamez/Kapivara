@@ -1,0 +1,107 @@
+import { X } from "lucide-react";
+import { useState } from "react";
+import { MethodButton } from "../common/Button";
+import { METHODS_COLORS, METHODS_STYLE_COLORS_BG } from "@/utils/methods.constants";
+
+interface CreateRequestModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onCreate: (name: string, method: string, collectionId?: string) => Promise<void>;
+    collectionId?: string; // Pre-select if we created it from a folder
+}
+
+const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+const METHOD_OPTIONS = HTTP_METHODS.map(m => ({
+    label: m,
+    value: m,
+    className: METHODS_COLORS[m as keyof typeof METHODS_COLORS],
+    activeClassName: METHODS_STYLE_COLORS_BG[m as keyof typeof METHODS_STYLE_COLORS_BG],
+}));
+
+export const CreateRequestModal = ({ isOpen, onClose, onCreate, collectionId }: CreateRequestModalProps) => {
+    const [name, setName] = useState("");
+    const [method, setMethod] = useState("GET");
+    const [isLoading, setIsLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+
+        setIsLoading(true);
+        try {
+            await onCreate(name, method, collectionId);
+            onClose();
+            setName("");
+            setMethod("GET");
+        } catch (error) {
+            console.error("Error creating request:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create New Request</h2>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="req-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Request Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="req-name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-900 dark:text-white"
+                            placeholder="e.g. Get User Profile"
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Method
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {METHOD_OPTIONS.map((option) => (
+                                <MethodButton
+                                    key={option.value}
+                                    value={method}
+                                    onChange={setMethod}
+                                    option={option}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={!name.trim() || isLoading}
+                            className="px-4 py-2 bg-[#0E61B1] text-white rounded-xl font-medium hover:bg-[#0E61B1]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            {isLoading ? "Creating..." : "Create Request"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
