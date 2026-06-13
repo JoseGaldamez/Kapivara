@@ -1,4 +1,5 @@
-import LogoKapivara from "@/assets/logo-kapivara.png"
+import LogoKapivaraLight from "@/assets/logo-kapivara.png"
+import LogoKapivaraDark from "@/assets/logo-kapivara-dark.png"
 import { Settings, X } from "lucide-react"
 
 interface TopBarProps {
@@ -12,7 +13,8 @@ export const TopBar = ({ searchTerm = "", onSearchChange, onOpenSettings }: TopB
         <div className="w-full h-16 p-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                    <img src={LogoKapivara} alt="Logo Kapivara" className="w-52" />
+                    <img src={LogoKapivaraLight} alt="Logo Kapivara" className="w-52 dark:hidden" />
+                    <img src={LogoKapivaraDark} alt="Logo Kapivara" className="w-52 hidden dark:block" />
                     
                     <div className="px-4 relative">
                         <input
