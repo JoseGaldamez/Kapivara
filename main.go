@@ -29,6 +29,7 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 248, G: 250, B: 252, A: 255},
 		OnStartup:        app.startup,
 		OnDomReady:       app.domReady,
+		OnBeforeClose:    app.beforeClose,
 		OnShutdown:       app.shutdown,
 		StartHidden:      true,
 		WindowStartState: options.Normal,

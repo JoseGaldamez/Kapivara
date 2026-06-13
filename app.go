@@ -72,10 +72,16 @@ func (a *App) domReady(ctx context.Context) {
 	runtime.WindowShow(ctx)
 }
 
-// shutdown is called when the app is closing.
-func (a *App) shutdown(ctx context.Context) {
+// beforeClose is called when the window is about to close.
+func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovered from panic in beforeClose: %v\n", r)
+		}
+	}()
+
 	if a.db != nil {
-		// Obtener tamaño y posición actual de la ventana
+		// Obtener tamaño y posición actual de la ventana (el window aún es válido aquí)
 		w, h := runtime.WindowGetSize(ctx)
 		x, y := runtime.WindowGetPosition(ctx)
 
@@ -84,7 +90,19 @@ func (a *App) shutdown(ctx context.Context) {
 		_ = a.db.SaveSetting("window_height", strconv.Itoa(h))
 		_ = a.db.SaveSetting("window_x", strconv.Itoa(x))
 		_ = a.db.SaveSetting("window_y", strconv.Itoa(y))
+	}
+	return false
+}
 
+// shutdown is called when the app is closing.
+func (a *App) shutdown(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovered from panic in shutdown: %v\n", r)
+		}
+	}()
+
+	if a.db != nil {
 		fmt.Println("Closing database connection...")
 		a.db.Close()
 	}
@@ -122,6 +140,3 @@ func (a *App) OpenFileDialog() (string, error) {
 		Title: "Select File",
 	})
 }
-
-
-

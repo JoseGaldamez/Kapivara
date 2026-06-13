@@ -95,64 +95,64 @@
 ## Fase 6 — Migrar código frontend (sin dependencias de Tauri)
 > Copiar primero todo lo que NO depende de Tauri APIs.
 
-- [ ] Copiar `types/` — definiciones TypeScript
-  - [ ] `index.ts` (RequestInfo, Collection, SavedResponse, etc.)
-  - [ ] `settings.ts` (SettingItem)
-- [ ] Copiar `utils/` — utilidades puras
-  - [ ] `environment-resolver.ts`
-  - [ ] `headers.constants.ts`
-  - [ ] `methods.constants.ts`
-  - [ ] `information.constant.ts`
-- [ ] Copiar `stores/` — Zustand stores (sin dependencias de Tauri)
-  - [ ] `console.store.ts`
-  - [ ] `environment.store.ts`
-  - [ ] `project.store.ts`
-  - [ ] `request.store.ts`
-  - [ ] `settings.store.ts`
-- [ ] Copiar `hooks/`
-  - [ ] `useSidebarDnd.ts`
-  - [ ] `useSidebarResize.ts`
-  - [ ] `useTheme.ts`
-- [ ] Copiar `layouts/`
-  - [ ] `MainLayout.tsx`
-- [ ] Copiar `pages/`
-  - [ ] `HomePage/`
-  - [ ] `Settings/`
-  - [ ] `Workspace/`
-- [ ] Copiar `components/`
+- [x] Copiar `types/` — definiciones TypeScript
+  - [x] `index.ts` (RequestInfo, Collection, SavedResponse, etc.)
+  - [x] `settings.ts` (SettingItem)
+- [x] Copiar `utils/` — utilidades puras
+  - [x] `environment-resolver.ts`
+  - [x] `headers.constants.ts`
+  - [x] `methods.constants.ts`
+  - [x] `information.constant.ts`
+- [x] Copiar `stores/` — Zustand stores (sin dependencias de Tauri)
+  - [x] `console.store.ts`
+  - [x] `environment.store.ts`
+  - [x] `project.store.ts`
+  - [x] `request.store.ts`
+  - [x] `settings.store.ts`
+- [x] Copiar `hooks/`
+  - [x] `useSidebarDnd.ts`
+  - [x] `useSidebarResize.ts`
+  - [x] `useTheme.ts`
+- [x] Copiar `layouts/`
+  - [x] `MainLayout.tsx`
+- [x] Copiar `pages/`
+  - [x] `HomePage/`
+  - [x] `Settings/`
+  - [x] `Workspace/`
+- [/] Copiar `components/` (Esperando ejecución de copia por el usuario)
   - [ ] `common/`
   - [ ] `home/`
   - [ ] `modals/`
   - [ ] `settings/`
   - [ ] `sidebar/`
   - [ ] `workspace/`
-- [ ] Copiar estilos
-  - [ ] `App.css`
+- [x] Copiar estilos
+  - [x] `App.css`
 
 ---
 
 ## Fase 7 — Adaptar capa IPC (Tauri → Wails)
 > Los 4 archivos que importan APIs de Tauri.
 
-- [ ] Reescribir `services/db.service.ts`
-  - [ ] Reemplazar `@tauri-apps/plugin-sql` por llamadas a bindings Go de Wails
-  - [ ] `Database.load()` → llamada al backend Go para inicializar DB
-  - [ ] `db.select()` → `DBSelect()` vía `wailsjs/go/main/App`
-  - [ ] `db.execute()` → `DBExecute()` vía `wailsjs/go/main/App`
-- [ ] Adaptar `services/request.service.ts`
-  - [ ] Sin cambios directos (usa `db.service.ts` internamente)
-- [ ] Adaptar `services/projects.service.ts`
-  - [ ] Sin cambios directos (usa `db.service.ts` internamente)
-- [ ] Adaptar `services/environment.service.ts`
-  - [ ] Sin cambios directos (usa `db.service.ts` internamente)
-- [ ] Adaptar `services/settings.service.ts`
-  - [ ] Sin cambios directos (usa `db.service.ts` internamente)
-- [ ] Reescribir `controllers/request.controller.ts`
-  - [ ] Reemplazar `invoke('make_http_request', ...)` por `MakeHttpRequest()` de Wails
-- [ ] Reescribir `App.tsx`
-  - [ ] Reemplazar `invoke("close_splashscreen")` por equivalente de Wails o eliminarlo
-- [ ] Reescribir `components/.../FormDataType.tsx`
-  - [ ] Reemplazar `open()` de `@tauri-apps/plugin-dialog` por `OpenFileDialog()` de Wails
+- [x] Reescribir `services/db.service.ts`
+  - [x] Reemplazar `@tauri-apps/plugin-sql` por llamadas a bindings Go de Wails
+  - [x] `Database.load()` → llamada al backend Go para inicializar DB
+  - [x] `db.select()` → `DBSelect()` vía `wailsjs/go/main/App`
+  - [x] `db.execute()` → `DBExecute()` vía `wailsjs/go/main/App`
+- [x] Adaptar `services/request.service.ts`
+  - [x] Sin cambios directos (usa `db.service.ts` internamente)
+- [x] Adaptar `services/projects.service.ts`
+  - [x] Sin cambios directos (usa `db.service.ts` internamente)
+- [x] Adaptar `services/environment.service.ts`
+  - [x] Sin cambios directos (usa `db.service.ts` internamente)
+- [x] Adaptar `services/settings.service.ts`
+  - [x] Sin cambios directos (usa `db.service.ts` internamente)
+- [x] Reescribir `controllers/request.controller.ts`
+  - [x] Reemplazar `invoke('make_http_request', ...)` por `MakeHttpRequest()` de Wails
+- [x] Reescribir `App.tsx`
+  - [x] Reemplazar `invoke("close_splashscreen")` por equivalente de Wails o eliminarlo
+- [x] Reescribir `components/.../FormDataType.tsx`
+  - [x] Reemplazar `open()` de `@tauri-apps/plugin-dialog` por `OpenFileDialog()` de Wails
 
 ---
 
