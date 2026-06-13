@@ -9,5 +9,12 @@
   "author": {
     "name": "José Galdámez",
     "email": "josegaldamez1991@gmail.com"
+  },
+  "info": {
+    "companyName": "José Galdámez",
+    "productName": "Kapivara",
+    "productVersion": "0.1.10",
+    "copyright": "Copyright © 2026 José Galdámez",
+    "comments": "A REST API client tool"
   }
 }
