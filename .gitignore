@@ -5,3 +5,4 @@ frontend/dist
 *.db
 .DS_Store
 
+build_macos.sh
