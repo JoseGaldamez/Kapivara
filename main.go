@@ -18,7 +18,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     "Kapivara",
+		Title:     AppTitle,
 		Width:     1280,
 		Height:    720,
 		MinWidth:  960,

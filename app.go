@@ -29,14 +29,17 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	// Obtener el directorio de configuración del usuario
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		configDir = "."
+	// Obtener la ruta de la base de datos (con soporte de override mediante KAPIVARA_DB_PATH)
+	dbPath := os.Getenv("KAPIVARA_DB_PATH")
+	if dbPath == "" {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			configDir = "."
+		}
+		dbPath = filepath.Join(configDir, DBFolder, DBName)
 	}
-	dbPath := filepath.Join(configDir, "Kapivara", "kapivara.db")
 
-	fmt.Printf("Initializing database at: %s\n", dbPath)
+	fmt.Printf("[%s] Initializing database at: %s\n", AppTitle, dbPath)
 	db, err := database.Initialize(dbPath)
 	if err != nil {
 		fmt.Printf("Error initializing database: %v\n", err)
@@ -47,6 +50,8 @@ func (a *App) startup(ctx context.Context) {
 
 // domReady is called when the frontend DOM is ready.
 func (a *App) domReady(ctx context.Context) {
+	runtime.WindowSetTitle(ctx, AppTitle)
+
 	if a.db != nil {
 		// Restablecer posición y tamaño de la ventana desde la DB
 		widthStr, _ := a.db.GetSetting("window_width")
