@@ -23,7 +23,7 @@ export const CreateFolderModal = ({ isOpen, onClose, onCreate, parentId }: Creat
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
                     <Folder className="text-[#0E61B1]" size={20} />

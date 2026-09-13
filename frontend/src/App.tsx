@@ -5,7 +5,7 @@ import { settingsController } from "./controllers/settings.controller";
 import { projectController } from "./controllers/project.controller";
 import { useTheme } from "./hooks/useTheme";
 
-import { ToastContainer } from "react-toastify";
+import { AppToastContainer } from "./components/common/AppToastContainer";
 import "react-toastify/dist/ReactToastify.css";
 import { useState } from "react";
 import { useSettingsStore } from "./stores/settings.store";
@@ -50,7 +50,7 @@ function App() {
   return (
     <>
       <MainLayout />
-      <ToastContainer position="bottom-right" theme={effectiveTheme} />
+      <AppToastContainer theme={effectiveTheme} />
     </>
   );
 }

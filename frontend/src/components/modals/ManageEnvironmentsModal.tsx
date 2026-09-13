@@ -12,6 +12,7 @@ interface ManageEnvironmentsModalProps {
     isOpen: boolean;
     onClose: () => void;
     projectId: string;
+    initialView?: "editor" | "resolved";
 }
 
 const EMPTY_ENVIRONMENTS: any[] = [];
@@ -46,7 +47,7 @@ const parseVariables = (environment: Environment | undefined): EnvironmentVariab
     }
 };
 
-export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId }: ManageEnvironmentsModalProps) => {
+export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId, initialView = "editor" }: ManageEnvironmentsModalProps) => {
     const projectEnvironments = useEnvironmentStore((state) => state.projectEnvironmentsByProject[projectId] ?? EMPTY_ENVIRONMENTS);
     const globalEnvironments = useEnvironmentStore((state) => state.globalEnvironments ?? EMPTY_ENVIRONMENTS);
     const activeProjectEnvId = useEnvironmentStore((state) => state.activeProjectEnvironmentIdByProject[projectId] ?? null);
@@ -83,6 +84,7 @@ export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId }: ManageEn
     // Bootstrap data when opening modal
     useEffect(() => {
         if (isOpen) {
+            setShowResolvedDashboard(initialView === "resolved");
             const init = async () => {
                 await environmentController.bootstrap(projectId);
                 const resolved = await environmentController.getResolvedVariables(projectId);
@@ -97,7 +99,7 @@ export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId }: ManageEn
             };
             init();
         }
-    }, [isOpen, projectId]);
+    }, [isOpen, projectId, initialView]);
 
     const refreshDashboard = async () => {
         const resolved = await environmentController.getResolvedVariables(projectId);
@@ -218,7 +220,7 @@ export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId }: ManageEn
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-6 transition-all duration-300">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 md:p-6 transition-all duration-300">
             <div className="bg-[#f8fafc] dark:bg-[#0b0f19] border border-gray-200 dark:border-gray-800/80 rounded-2xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden text-gray-800 dark:text-gray-200 transition-colors">
                 
                 {/* Header */}
@@ -600,7 +602,7 @@ export const ManageEnvironmentsModal = ({ isOpen, onClose, projectId }: ManageEn
 
                 {/* Delete Confirmation Modal Overlay */}
                 {isConfirmDeleteOpen && activeEditingEnv && (
-                    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
                         <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200 text-gray-800 dark:text-gray-200">
                             <div className="flex items-center gap-3 text-red-500 mb-4">
                                 <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/30">

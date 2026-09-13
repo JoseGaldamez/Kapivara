@@ -1,6 +1,5 @@
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { RequestPanel } from "@/components/workspace/RequestPanel";
-import { RequestConsole } from "@/components/workspace/RequestConsole";
 import { Project, RequestInfo } from "@/types";
 import { useMemo } from "react";
 import { useRequestStore } from "@/stores/request.store";
@@ -21,23 +20,20 @@ export const Workspace = ({ project }: WorkspaceProps) => {
     , [requests, activeRequestId]);
 
     return (
-        <div className="flex h-full p-2 gap-2 bg-[#F5F5F7] dark:bg-[#0D0D11] transition-colors overflow-hidden">
+        <div className="flex h-full p-3 gap-3 bg-[#f4eadf] dark:bg-[#101115] transition-colors overflow-hidden">
             <Sidebar
                 projectId={project.uid}
                 activeRequestId={activeRequestId}
                 onSelectRequest={(req) => setActiveRequest(project.uid, req.id)}
             />
             <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
-                <div className="flex-1 min-h-0 overflow-hidden">
-                    {activeRequest ? (
-                        <RequestPanel key={activeRequest.id} request={activeRequest} />
-                    ) : (
-                        <div className="h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-[#16161E] rounded-2xl border border-slate-200/50 dark:border-slate-800/40 shadow-sm">
-                            Select a request to get started
-                        </div>
-                    )}
-                </div>
-                <RequestConsole />
+                {activeRequest ? (
+                    <RequestPanel key={activeRequest.id} request={activeRequest} project={project} />
+                ) : (
+                    <div className="flex h-full items-center justify-center rounded-2xl border border-[#ded7ce] bg-[#fffdf9] text-sm text-[#8a7e72] shadow-xs dark:border-white/8 dark:bg-[#18191e] dark:text-[#a89f91]">
+                        Select a request to get started
+                    </div>
+                )}
             </div>
         </div>
     );

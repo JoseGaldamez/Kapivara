@@ -5,6 +5,7 @@ import { useConsoleStore } from "@/stores/console.store";
 import { MakeHttpRequest } from "../../wailsjs/go/main/App";
 import { environmentController } from "@/controllers/environment.controller";
 import { resolveTemplateString, resolveVariablesInUnknown } from "@/utils/environment-resolver";
+import type { ParsedCurlRequest } from "@/utils/curl-parser";
 
 class RequestController {
     private service: RequestService | null = null;
@@ -44,6 +45,90 @@ class RequestController {
             return newRequest;
         } catch (error) {
             console.error('Failed to create request:', error);
+            throw error;
+        }
+    }
+
+    public async createDraftRequest(projectId: string, collectionId?: string): Promise<RequestInfo> {
+        try {
+            const service = await this.getService();
+            const newRequest: RequestInfo = {
+                id: crypto.randomUUID(),
+                project_id: projectId,
+                name: '',
+                method: 'GET',
+                url: '{{baseUrl}}/',
+                collection_id: collectionId || null,
+                is_dirty: true
+            };
+            await service.createRequest(newRequest);
+            useRequestStore.getState().addRequest(newRequest);
+            useRequestStore.getState().setActiveRequest(projectId, newRequest.id);
+            return newRequest;
+        } catch (error) {
+            console.error('Failed to create draft request:', error);
+            throw error;
+        }
+    }
+
+    public async createRequestFromCurl(projectId: string, parsed: ParsedCurlRequest, collectionId?: string): Promise<RequestInfo> {
+        const service = await this.getService();
+        const requestId = crypto.randomUUID();
+        let importedBody = parsed.body;
+        if (parsed.body && (parsed.bodyType === "form-data" || parsed.bodyType === "x-www-form-urlencoded")) {
+            try {
+                const items = JSON.parse(parsed.body);
+                if (Array.isArray(items)) {
+                    importedBody = JSON.stringify(items.map((item) => ({ id: crypto.randomUUID(), ...item })));
+                }
+            } catch {
+                // The parser already validates these body shapes; preserve the raw value if it cannot be decoded.
+            }
+        }
+        const headers = parsed.headers.map((header) => ({
+            id: crypto.randomUUID(),
+            request_id: requestId,
+            key: header.key,
+            value: header.value,
+            is_active: 1,
+        }));
+        const params = parsed.params.map((param) => ({
+            id: crypto.randomUUID(),
+            request_id: requestId,
+            key: param.key,
+            value: param.value,
+            description: "",
+            is_active: 1,
+        }));
+        const newRequest: RequestInfo = {
+            id: requestId,
+            project_id: projectId,
+            collection_id: collectionId || null,
+            name: "",
+            method: parsed.method,
+            url: parsed.url,
+            headers: JSON.stringify(headers),
+            params: JSON.stringify(params),
+            auth: JSON.stringify(parsed.auth),
+            body: importedBody,
+            body_type: parsed.bodyType,
+            is_dirty: false,
+        };
+
+        try {
+            await service.createRequest(newRequest);
+            await service.updateRequest({
+                id: requestId,
+                headers: newRequest.headers,
+                params: newRequest.params,
+                auth: newRequest.auth,
+            });
+            useRequestStore.getState().addRequest(newRequest);
+            useRequestStore.getState().setActiveRequest(projectId, requestId);
+            return newRequest;
+        } catch (error) {
+            await service.deleteRequest(requestId).catch(() => undefined);
+            console.error("Failed to import cURL request:", error);
             throw error;
         }
     }
@@ -199,6 +284,15 @@ class RequestController {
                         }
                     });
                     finalBody = params.toString();
+                }
+            }
+
+            // Auto Content-Type header based on body_type if not explicitly set by user (case-insensitive)
+            const hasContentType = Object.keys(headers).some(k => k.toLowerCase() === 'content-type');
+            if (!hasContentType) {
+                if (request.body_type === 'json') {
+                    headers['Content-Type'] = 'application/json';
+                } else if (request.body_type === 'x-www-form-urlencoded') {
                     headers['Content-Type'] = 'application/x-www-form-urlencoded';
                 }
             }
@@ -225,7 +319,10 @@ class RequestController {
                 method: request.method,
                 response: response,
                 body_type: request.body_type,
-                body: request.body
+                body: request.body,
+                params: request.params,
+                headers: request.headers,
+                auth: request.auth
             };
 
             useRequestStore.getState().updateRequest({
@@ -271,7 +368,10 @@ class RequestController {
                 method: request.method,
                 response: errorResponse,
                 body_type: request.body_type,
-                body: request.body
+                body: request.body,
+                params: request.params,
+                headers: request.headers,
+                auth: request.auth
             };
 
             useRequestStore.getState().updateRequest({

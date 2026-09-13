@@ -1,85 +1,46 @@
-import { create } from 'zustand';
-import { Project } from '../types';
-
-export interface Tab {
-    id: string;
-    type: 'home' | 'project';
-    projectId?: string;
-    title: string;
-    closable: boolean;
-}
+import { create } from "zustand";
+import { Project } from "../types";
 
 interface ProjectState {
-    // State
     projects: Project[];
-    tabs: Tab[];
-    activeTabId: string;
-
-    // Actions
+    activeProjectId: string | null;
+    isSettingsOpen: boolean;
     setProjects: (projects: Project[]) => void;
     addProject: (project: Project) => void;
-    openProjectTab: (project: Project) => void;
-    closeTab: (tabId: string) => void;
-    setActiveTab: (tabId: string) => void;
+    selectProject: (projectId: string | null) => void;
     removeProject: (projectId: string) => void;
-
-    isSettingsOpen: boolean;
+    updateProject: (projectId: string, updates: Partial<Project>) => void;
     setSettingsOpen: (isOpen: boolean) => void;
 }
 
-export const useProjectStore = create<ProjectState>((set, get) => ({
+export const useProjectStore = create<ProjectState>((set) => ({
     projects: [],
-    tabs: [{ id: 'home', type: 'home', title: 'Home', closable: false }],
-    activeTabId: 'home',
+    activeProjectId: null,
+    isSettingsOpen: false,
 
-    setProjects: (projects) => set({ projects }),
+    setProjects: (projects) => set((state) => ({
+        projects,
+        activeProjectId: state.activeProjectId && projects.some((project) => project.uid === state.activeProjectId)
+            ? state.activeProjectId
+            : null,
+    })),
 
     addProject: (project) => set((state) => ({
-        projects: [project, ...state.projects]
+        projects: [project, ...state.projects],
     })),
+
+    selectProject: (projectId) => set({ activeProjectId: projectId }),
+
     removeProject: (projectId) => set((state) => ({
-        projects: state.projects.filter(project => project.uid !== projectId)
+        projects: state.projects.filter((project) => project.uid !== projectId),
+        activeProjectId: state.activeProjectId === projectId ? null : state.activeProjectId,
     })),
-    openProjectTab: (project) => {
-        const { tabs, setActiveTab } = get();
-        const existingTab = tabs.find(t => t.projectId === project.uid);
 
-        if (existingTab) {
-            setActiveTab(existingTab.id);
-            return;
-        }
+    updateProject: (projectId, updates) => set((state) => ({
+        projects: state.projects.map((project) =>
+            project.uid === projectId ? { ...project, ...updates } : project
+        ),
+    })),
 
-        const newTab: Tab = {
-            id: `project-${project.uid}`,
-            type: 'project',
-            projectId: project.uid,
-            title: project.name,
-            closable: true
-        };
-
-        set({ tabs: [...tabs, newTab], activeTabId: newTab.id });
-    },
-
-    closeTab: (tabId) => {
-        const { tabs, activeTabId } = get();
-        const tabIndex = tabs.findIndex(t => t.id === tabId);
-
-        if (tabIndex === -1) return;
-
-        const newTabs = tabs.filter(t => t.id !== tabId);
-        let newActiveId = activeTabId;
-
-        if (activeTabId === tabId) {
-            // If closing active tab, switch to the one to the left, or home
-            const newIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-            newActiveId = newTabs[newIndex].id;
-        }
-
-        set({ tabs: newTabs, activeTabId: newActiveId });
-    },
-
-    setActiveTab: (tabId) => set({ activeTabId: tabId }),
-
-    isSettingsOpen: false,
-    setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen })
+    setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
 }));

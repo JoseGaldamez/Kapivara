@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { getBorderColor, highlight } from "./UtilsFunctionJsonEditor";
+import { getBorderColor, getBackgroundColor, highlight } from "./UtilsFunctionJsonEditor";
 
 interface JsonEditorProps {
     value: string;
@@ -131,7 +131,7 @@ export const JsonEditor = ({ value, onChange, isValidJson }: JsonEditorProps) =>
     };
 
     return (
-        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor(isValidJson)} rounded overflow-hidden bg-gray-50 dark:bg-gray-900`}>
+        <div className={`relative w-full h-full font-mono text-sm border ${getBorderColor(isValidJson)} ${getBackgroundColor(isValidJson)} rounded overflow-hidden transition-colors duration-150`}>
             <pre
                 ref={preRef}
                 className="absolute top-0 left-0 w-full h-full p-2 m-0 pointer-events-none select-none overflow-hidden whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200"

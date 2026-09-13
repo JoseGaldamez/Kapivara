@@ -105,15 +105,15 @@ export const QueryParamsTab = ({
             <div className="flex-1 overflow-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                            <th className="p-2 w-8"></th>
-                            <th className="p-2 text-xs font-semibold text-gray-500 dark:text-gray-400 w-1/3">Key</th>
-                            <th className="p-2 text-xs font-semibold text-gray-500 dark:text-gray-400 w-1/3">Value</th>
-                            <th className="p-2 text-xs font-semibold text-gray-500 dark:text-gray-400">Description</th>
-                            <th className="p-2 w-8"></th>
+                        <tr className="border-b border-[#ded7ce]/70 dark:border-white/8 text-xs font-semibold text-[#8a7e72] dark:text-[#a89f91]">
+                            <th className="py-2 px-3 w-8 text-center"></th>
+                            <th className="py-2 px-3 w-1/3">Key</th>
+                            <th className="py-2 px-3 w-1/3">Value</th>
+                            <th className="py-2 px-3">Description</th>
+                            <th className="py-2 px-3 w-10 text-center"></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[#ded7ce]/40 dark:divide-white/5">
                         {localParams.map((param, index) => {
                             const isLast = index === localParams.length - 1;
                             const isValueFocused = focusedField?.id === param.id && focusedField.field === 'value';
@@ -122,29 +122,35 @@ export const QueryParamsTab = ({
                             const suggestions = getValueSuggestions(paramValue);
 
                             return (
-                                <tr key={param.id} className="group border-b border-gray-100 dark:border-gray-800/50">
-                                    <td className="p-2 text-center">
-                                        {!isLast && (
+                                <tr key={param.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                                    <td className="py-1.5 px-3 text-center align-middle">
+                                        {!isLast ? (
                                             <input 
                                                 type="checkbox" 
-                                                className="rounded border-gray-300 dark:border-gray-600 cursor-pointer" 
+                                                className="w-3.5 h-3.5 accent-[#0066ff] rounded cursor-pointer" 
                                                 checked={param.is_active === 1}
                                                 onChange={(e) => updateParam(param.id, 'is_active', e.target.checked ? 1 : 0)}
                                             />
+                                        ) : (
+                                            <input 
+                                                type="checkbox" 
+                                                disabled
+                                                className="w-3.5 h-3.5 opacity-30 rounded cursor-not-allowed" 
+                                            />
                                         )}
                                     </td>
-                                    <td className="p-1">
+                                    <td className="p-1 align-middle">
                                         <input
                                             type="text"
-                                            placeholder="Key"
-                                            className="w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none"
+                                            placeholder={isLast ? "Add parameter..." : "Key"}
+                                            className="w-full px-2 py-1 bg-transparent border border-transparent focus:border-[#0066ff]/40 focus:bg-white dark:focus:bg-[#121316] rounded text-xs font-mono text-[#1a1714] dark:text-[#f4eadf] placeholder:text-[#8a7e72]/70 focus:outline-none"
                                             value={param.key || ""}
                                             onChange={(e) => updateParam(param.id, 'key', e.target.value)}
                                             onFocus={() => setFocusedField({ id: param.id, field: 'key' })}
                                             onBlur={() => setTimeout(() => setFocusedField(null), 120)}
                                         />
                                     </td>
-                                    <td className="p-1 relative">
+                                    <td className="p-1 relative align-middle">
                                         <div
                                             className="relative cursor-text"
                                             onClick={() => inputRefs.current[param.id]?.focus()}
@@ -153,25 +159,25 @@ export const QueryParamsTab = ({
                                             <input
                                                 ref={el => { inputRefs.current[param.id] = el; }}
                                                 type="text"
-                                                placeholder="Value"
+                                                placeholder={isLast ? "" : "Value"}
                                                 value={paramValue}
                                                 onChange={(e) => updateParam(param.id, 'value', e.target.value)}
                                                 onFocus={() => setFocusedField({ id: param.id, field: 'value' })}
                                                 onBlur={() => setTimeout(() => setFocusedField(null), 120)}
-                                                className={`w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none ${!isValueFocused && hasVars ? 'opacity-0 absolute inset-0 h-full pointer-events-none' : ''}`}
+                                                className={`w-full px-2 py-1 bg-transparent border border-transparent focus:border-[#0066ff]/40 focus:bg-white dark:focus:bg-[#121316] rounded text-xs font-mono text-[#1a1714] dark:text-[#f4eadf] placeholder:text-[#8a7e72]/70 focus:outline-none ${!isValueFocused && hasVars ? 'opacity-0 absolute inset-0 h-full pointer-events-none' : ''}`}
                                             />
                                             {/* Overlay — visible when blurred and value has vars */}
                                             {!isValueFocused && hasVars && (
-                                                <div className="p-1 flex items-center flex-wrap gap-0.5 text-sm min-h-[28px]">
+                                                <div className="px-2 py-1 flex items-center flex-wrap gap-1 text-xs font-mono min-h-[26px]">
                                                     {renderValueOverlay(paramValue)}
                                                 </div>
                                             )}
                                             {/* Suggestions dropdown */}
                                             {isValueFocused && suggestions.length > 0 && (
-                                                <div className="absolute left-1 right-1 top-full mt-1 z-20 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg p-1">
+                                                <div className="absolute left-1 right-1 top-full mt-1 z-30 rounded-xl border border-[#ded7ce] dark:border-white/10 bg-[#fffdf9] dark:bg-[#1c1d24] shadow-xl p-1">
                                                     {suggestions.map((sv) => (
                                                         <button key={sv} type="button"
-                                                            className="w-full text-left px-2 py-1 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-mono"
+                                                            className="w-full text-left px-2 py-1 rounded-lg text-xs text-[#1a1714] dark:text-[#f4eadf] hover:bg-blue-50 dark:hover:bg-blue-950/40 font-mono"
                                                             onMouseDown={() => updateParam(param.id, 'value', sv)}
                                                         >{sv}</button>
                                                     ))}
@@ -179,24 +185,25 @@ export const QueryParamsTab = ({
                                             )}
                                         </div>
                                     </td>
-                                    <td className="p-1">
+                                    <td className="p-1 align-middle">
                                         <input
                                             type="text"
-                                            placeholder="Description"
-                                            className="w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none"
+                                            placeholder={isLast ? "" : "Description"}
+                                            className="w-full px-2 py-1 bg-transparent border border-transparent focus:border-[#0066ff]/40 focus:bg-white dark:focus:bg-[#121316] rounded text-xs text-[#5f554e] dark:text-[#a89f91] placeholder:text-[#8a7e72]/70 focus:outline-none"
                                             value={param.description || ""}
                                             onChange={(e) => updateParam(param.id, 'description', e.target.value)}
                                             onFocus={() => setFocusedField({ id: param.id, field: 'description' })}
                                             onBlur={() => setTimeout(() => setFocusedField(null), 120)}
                                         />
                                     </td>
-                                    <td className="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <td className="py-1.5 px-3 text-center align-middle opacity-0 group-hover:opacity-100 transition-opacity">
                                         {!isLast && (
                                             <button 
                                                 onClick={() => removeParam(param.id)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                                className="text-[#8a7e72] hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
+                                                title="Delete parameter"
                                             >
-                                                <Trash2 size={14} />
+                                                <Trash2 size={13} />
                                             </button>
                                         )}
                                     </td>

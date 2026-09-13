@@ -14,7 +14,7 @@ interface CollectionNodeProps {
     getMethodColor: (method: string) => string;
     expandedFolders: Record<string, boolean>;
     toggleFolder: (id: string) => void;
-    openCreateRequestModal: (folderId?: string) => void;
+    onCreateRequest: (folderId?: string) => void;
     openCreateFolderModal: (folderId?: string) => void;
 }
 
@@ -28,7 +28,7 @@ export const CollectionNode = ({
     getMethodColor,
     expandedFolders,
     toggleFolder,
-    openCreateRequestModal,
+    onCreateRequest,
     openCreateFolderModal,
 }: CollectionNodeProps) => {
     const isExpanded = expandedFolders[collection.id];
@@ -44,38 +44,46 @@ export const CollectionNode = ({
         <div className="flex flex-col">
             <div
                 ref={setNodeRef}
-                className={`flex items-center justify-between p-1.5 rounded-lg group transition-colors ${
+                className={`flex items-center justify-between px-2 py-1.5 rounded-lg group transition-colors select-none cursor-pointer ${
                     isOver
-                        ? "bg-blue-100 dark:bg-blue-900/40 border border-blue-400"
-                        : "hover:bg-gray-200 dark:hover:bg-gray-800"
+                        ? "bg-blue-50 dark:bg-blue-900/30 border border-blue-400/60 text-[#1a1714] dark:text-[#f4eadf]"
+                        : "hover:bg-black/[0.04] dark:hover:bg-white/[0.04] text-[#1a1714] dark:text-[#f4eadf]"
                 }`}
             >
                 <div
                     onClick={() => toggleFolder(collection.id)}
-                    className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300 font-medium flex-1 overflow-hidden"
+                    className="flex items-center gap-2 flex-1 overflow-hidden min-w-0"
                 >
                     {isExpanded ? (
-                        <ChevronDown size={14} className="text-gray-400 shrink-0" />
+                        <ChevronDown size={13} className="text-[#8a7e72] dark:text-[#6e665d] shrink-0" />
                     ) : (
-                        <ChevronRight size={14} className="text-gray-400 shrink-0" />
+                        <ChevronRight size={13} className="text-[#8a7e72] dark:text-[#6e665d] shrink-0" />
                     )}
-                    <Folder size={14} className="text-[#0E61B1] shrink-0" />
-                    <span className="truncate">{collection.name}</span>
+                    <Folder size={14} className="text-[#5f554e] dark:text-[#a89f91] shrink-0" />
+                    <span className="text-xs font-semibold text-[#1a1714] dark:text-[#f4eadf] truncate">
+                        {collection.name}
+                    </span>
                 </div>
 
                 {isExpanded && (
-                    <div className="hidden group-hover:flex items-center gap-1 shrink-0 mr-2">
+                    <div className="hidden group-hover:flex items-center gap-0.5 shrink-0 ml-1">
                         <button
-                            onClick={() => openCreateRequestModal(collection.id)}
-                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md"
-                            title="New Request Here"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCreateRequest(collection.id);
+                            }}
+                            className="p-1 text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors"
+                            title="New Request in Folder"
                         >
                             <FilePlus size={12} />
                         </button>
                         <button
-                            onClick={() => openCreateFolderModal(collection.id)}
-                            className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md"
-                            title="New Folder Here"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openCreateFolderModal(collection.id);
+                            }}
+                            className="p-1 text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors"
+                            title="New Subfolder"
                         >
                             <FolderPlus size={12} />
                         </button>
@@ -84,7 +92,7 @@ export const CollectionNode = ({
             </div>
 
             {isExpanded && (
-            <div className="flex flex-col gap-1 ml-3.5 border-l border-gray-200 dark:border-gray-700 pl-2">
+                <div className="flex flex-col gap-0.5 ml-3 pl-2.5 border-l border-[#ded7ce]/60 dark:border-white/8 my-0.5">
                     {childCollections.map((child) => (
                         <CollectionNode
                             key={child.id}
@@ -97,7 +105,7 @@ export const CollectionNode = ({
                             getMethodColor={getMethodColor}
                             expandedFolders={expandedFolders}
                             toggleFolder={toggleFolder}
-                            openCreateRequestModal={openCreateRequestModal}
+                            onCreateRequest={onCreateRequest}
                             openCreateFolderModal={openCreateFolderModal}
                         />
                     ))}

@@ -23,5 +23,9 @@ export const highlight = (code: string) => {
 
 
 export const getBorderColor = (isValidJson: boolean) => {
-    return isValidJson ? 'border-gray-300 dark:border-gray-700' : 'border-red-500';
+    return isValidJson ? 'border-gray-300 dark:border-gray-700' : 'border-red-500 dark:border-red-500';
+};
+
+export const getBackgroundColor = (isValidJson: boolean) => {
+    return isValidJson ? 'bg-gray-50 dark:bg-gray-900' : 'bg-red-50 dark:bg-red-950/30';
 };

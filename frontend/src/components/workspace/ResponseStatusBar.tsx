@@ -10,7 +10,19 @@ interface ResponseStatusBarProps {
     onSaveResponse?: () => void;
 }
 
-export const ResponseStatusBar = ({ request, isCollapsed = false, onToggleCollapse, onSaveResponse }: ResponseStatusBarProps) => {
+const formatSize = (body?: string) => {
+    if (!body) return "0 B";
+    const bytes = new Blob([body]).size;
+    if (bytes < 1024) return `${bytes} B`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
+};
+
+export const ResponseStatusBar = ({
+    request,
+    isCollapsed = false,
+    onToggleCollapse,
+    onSaveResponse,
+}: ResponseStatusBarProps) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopyResponse = () => {
@@ -20,7 +32,7 @@ export const ResponseStatusBar = ({ request, isCollapsed = false, onToggleCollap
         try {
             const parsed = JSON.parse(textToCopy);
             textToCopy = JSON.stringify(parsed, null, 2);
-        } catch (e) {
+        } catch {
             // Not a JSON, keep original text
         }
 
@@ -30,45 +42,73 @@ export const ResponseStatusBar = ({ request, isCollapsed = false, onToggleCollap
         setTimeout(() => setIsCopied(false), 2000);
     };
 
+    const isSuccess = request.response && request.response.status >= 200 && request.response.status < 300;
+
     return (
-        <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center px-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
-            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Response</span>
+        <div className="py-2.5 px-4 border-b border-[#ded7ce]/60 dark:border-white/8 flex justify-between items-center bg-[#fffdf9] dark:bg-[#18191e] transition-colors select-none">
+            <span className="text-xs font-bold text-[#1a1714] dark:text-[#f4eadf]">
+                Response
+            </span>
+
             {request.response && (
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-4 text-xs font-mono">
-                        <span className={`font-bold ${request.response.status >= 200 && request.response.status < 300 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                            Status: {request.response.status} {request.response.status_text}
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">Time: {request.response.time_ms}ms</span>
-                    </div>
-                    <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
-                    {onSaveResponse && (
-                        <button
-                            onClick={onSaveResponse}
-                            className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
-                            title="Save Response"
-                        >
-                            <Bookmark size={14} />
-                        </button>
-                    )}
-                    <button
-                        onClick={handleCopyResponse}
-                        className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
-                        title="Copy Response"
+                <div className="flex items-center gap-3">
+                    {/* Status Pill */}
+                    <div
+                        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            isSuccess
+                                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
+                                : "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/60 dark:border-red-800/40"
+                        }`}
                     >
-                        {isCopied ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                    {onToggleCollapse ? (
+                        <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                                isSuccess ? "bg-emerald-500" : "bg-red-500"
+                            }`}
+                        />
+                        <span>
+                            {request.response.status === 0 ? "Error" : `${request.response.status} ${request.response.status_text || "OK"}`}
+                        </span>
+                    </div>
+
+                    {/* Time & Size metrics */}
+                    <div className="flex items-center gap-2 text-xs font-mono text-[#8a7e72] dark:text-[#a89f91]">
+                        <span>{request.response.time_ms} ms</span>
+                        <span>•</span>
+                        <span>{formatSize(request.response.body)}</span>
+                    </div>
+
+                    <div className="h-3.5 w-px bg-[#ded7ce]/80 dark:bg-white/10 mx-0.5" />
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                        {onSaveResponse && (
+                            <button
+                                onClick={onSaveResponse}
+                                className="text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                title="Save Response"
+                            >
+                                <Bookmark size={14} />
+                            </button>
+                        )}
                         <button
-                            onClick={onToggleCollapse}
-                            className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
-                            title={isCollapsed ? "Expand response" : "Collapse response"}
+                            onClick={handleCopyResponse}
+                            className="text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                            title="Copy Response"
                         >
-                            {isCollapsed ? <ChevronsUp size={14} /> : <ChevronsDown size={14} />}
+                            {isCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                         </button>
-                    ) : null}
+                        {onToggleCollapse ? (
+                            <button
+                                onClick={onToggleCollapse}
+                                className="text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                title={isCollapsed ? "Expand response" : "Collapse response"}
+                            >
+                                {isCollapsed ? <ChevronsUp size={14} /> : <ChevronsDown size={14} />}
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
             )}
         </div>
-    )
-}
+    );
+};

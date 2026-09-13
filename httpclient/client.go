@@ -166,6 +166,16 @@ func MakeRequest(method string, urlStr string, headers map[string]string, body s
 		req.Header.Set("Content-Type", contentType)
 	}
 
+	// Si no se proporcionó Content-Type en las cabeceras, asignar el por defecto según bodyType
+	if req.Header.Get("Content-Type") == "" {
+		switch bodyType {
+		case "json":
+			req.Header.Set("Content-Type", "application/json")
+		case "x-www-form-urlencoded":
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		}
+	}
+
 	// Ejecutar petición midiendo tiempo
 	start := time.Now()
 	resp, err := defaultClient.Do(req)

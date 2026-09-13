@@ -58,4 +58,30 @@ func TestInitializeAndMigrations(t *testing.T) {
 	if projName != "Test Project" {
 		t.Errorf("expected project name to be 'Test Project', got '%v'", projName)
 	}
+
+	// Probar inserción con mapa en Execute (debe ser serializado automáticamente a JSON)
+	err = db.Execute("INSERT INTO requests (id, project_id, name, method, url) VALUES (?, ?, ?, ?, ?)", []interface{}{"req-1", "proj-123", "Get User", "GET", "https://api.example.com"})
+	if err != nil {
+		t.Fatalf("failed to insert request: %v", err)
+	}
+
+	authDataMap := map[string]interface{}{"token": "secret-jwt-token"}
+	err = db.Execute("INSERT INTO request_auth (id, request_id, auth_type, auth_data) VALUES (?, ?, ?, ?)", []interface{}{"auth-1", "req-1", "bearer", authDataMap})
+	if err != nil {
+		t.Fatalf("failed to insert request_auth with map: %v", err)
+	}
+
+	authResults, err := db.Select("SELECT auth_type, auth_data FROM request_auth WHERE request_id = ?", []interface{}{"req-1"})
+	if err != nil {
+		t.Fatalf("failed to query request_auth: %v", err)
+	}
+	if len(authResults) != 1 {
+		t.Fatalf("expected 1 auth result, got %d", len(authResults))
+	}
+	if authResults[0]["auth_type"] != "bearer" {
+		t.Errorf("expected auth_type 'bearer', got '%v'", authResults[0]["auth_type"])
+	}
+	if authResults[0]["auth_data"] != `{"token":"secret-jwt-token"}` {
+		t.Errorf("expected auth_data '{\"token\":\"secret-jwt-token\"}', got '%v'", authResults[0]["auth_data"])
+	}
 }

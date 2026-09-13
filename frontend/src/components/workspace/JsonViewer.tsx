@@ -1,117 +1,91 @@
-import { ChevronRight, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import React, { useMemo } from "react";
 
 interface JsonViewerProps {
-    data: string; // Raw string data
+    data: string;
 }
 
-const JsonNode = ({ name, value, isLast = true }: { name?: string, value: any, isLast?: boolean }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
+const highlightValue = (val: string): React.ReactNode => {
+    const trimmed = val.trim();
+    const hasTrailingComma = trimmed.endsWith(",");
+    const core = hasTrailingComma ? trimmed.slice(0, -1) : trimmed;
 
-    const isObject = value !== null && typeof value === 'object';
-    const isArray = Array.isArray(value);
-    const isEmpty = isObject && Object.keys(value).length === 0;
-
-    const toggle = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-    };
-
-    if (isObject && !isEmpty) {
-        const keys = Object.keys(value);
-        const opening = isArray ? '[' : '{';
-        const closing = isArray ? ']' : '}';
-        const preview = isArray ? `Array(${keys.length})` : `{...}`;
-
-        return (
-            <div className="font-mono text-sm leading-6">
-                <div className="flex items-start hover:bg-gray-50 dark:hover:bg-gray-800 rounded-sm" >
-                    <span className="mr-1 mt-1 text-gray-400">
-                        {isExpanded ? <ChevronDown size={14} onClick={toggle} className="cursor-pointer" /> : <ChevronRight size={14} onClick={toggle} className="cursor-pointer" />}
-                    </span>
-                    <span className="mr-1">
-                        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">"{name}": </span>}
-                        <span className="text-gray-600 dark:text-gray-300">{opening}</span>
-                    </span>
-                    {!isExpanded && (
-                        <span className="text-gray-400 dark:text-gray-500 italic text-xs ml-1">{preview}</span>
-                    )}
-                    {!isExpanded && (
-                        <span className="text-gray-600 dark:text-gray-300">{closing}{!isLast && ','}</span>
-                    )}
-                </div>
-
-                {isExpanded && (
-                    <div className="pl-6 border-l border-gray-100 dark:border-gray-800 ml-2">
-                        {keys.map((key, index) => (
-                            <JsonNode
-                                key={key}
-                                name={isArray ? undefined : key}
-                                value={value[key]}
-                                isLast={index === keys.length - 1}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {isExpanded && (
-                    <div className="pl-6">
-                        <span className="text-gray-600 dark:text-gray-300">{closing}{!isLast && ','}</span>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // Primitive values
-    let renderValue = <span className="text-gray-800 dark:text-gray-200">{String(value)}</span>;
-    if (typeof value === 'string') {
-        renderValue = <span className="text-green-600 dark:text-green-400">"{value}"</span>;
-    } else if (typeof value === 'number') {
-        renderValue = <span className="text-blue-600 dark:text-blue-400">{value}</span>;
-    } else if (typeof value === 'boolean') {
-        renderValue = <span className="text-orange-600 dark:text-orange-400 font-bold">{String(value)}</span>;
-    } else if (value === null) {
-        renderValue = <span className="text-gray-500 dark:text-gray-400 italic">null</span>;
-    } else if (isEmpty) {
-        renderValue = <span className="text-gray-600 dark:text-gray-400">{isArray ? '[]' : '{}'}</span>;
+    let coloredNode: React.ReactNode = core;
+    if (core.startsWith('"') && core.endsWith('"')) {
+        coloredNode = <span className="text-[#0284c7] dark:text-[#38bdf8]">{core}</span>;
+    } else if (core === "true" || core === "false") {
+        coloredNode = <span className="text-[#2563eb] dark:text-[#60a5fa] font-semibold">{core}</span>;
+    } else if (core === "null") {
+        coloredNode = <span className="text-[#8a7e72] dark:text-[#a89f91] italic">{core}</span>;
+    } else if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(core)) {
+        coloredNode = <span className="text-[#7c3aed] dark:text-[#a78bfa]">{core}</span>;
+    } else {
+        coloredNode = <span className="text-[#5f554e] dark:text-[#a89f91]">{core}</span>;
     }
 
     return (
-        <div className="font-mono text-sm leading-6 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-sm flex">
-            {/* Spacer for alignment with collapsible nodes arrows */}
-            <span className="w-5 inline-block"></span>
-            <span>
-                {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">"{name}": </span>}
-                {renderValue}
-                {!isLast && <span className="text-gray-500 dark:text-gray-400">,</span>}
-            </span>
-        </div>
+        <>
+            {coloredNode}
+            {hasTrailingComma && <span className="text-[#5f554e] dark:text-[#a89f91]">,</span>}
+        </>
+    );
+};
+
+const highlightJsonLine = (line: string): React.ReactNode => {
+    // Check if line contains a key: "key": value
+    const keyMatch = line.match(/^(\s*)(".*?")\s*:\s*(.*)$/);
+    if (keyMatch) {
+        const [, indent, key, rest] = keyMatch;
+        return (
+            <>
+                <span>{indent}</span>
+                <span className="text-[#ea580c] dark:text-[#fb923c] font-medium">{key}</span>
+                <span className="text-[#5f554e] dark:text-[#a89f91]">: </span>
+                {highlightValue(rest)}
+            </>
+        );
+    }
+
+    // No key: e.g. bracket or scalar line
+    const indentMatch = line.match(/^(\s*)(.*)$/);
+    const indent = indentMatch ? indentMatch[1] : "";
+    const content = indentMatch ? indentMatch[2] : line;
+
+    return (
+        <>
+            <span>{indent}</span>
+            {highlightValue(content)}
+        </>
     );
 };
 
 export const JsonViewer = ({ data }: JsonViewerProps) => {
-    let parsedData = null;
-    let isJson = false;
-
-    try {
-        parsedData = JSON.parse(data);
-        isJson = true;
-    } catch (e) {
-        // Not JSON
-    }
-
-    if (!isJson) {
-        return (
-            <pre className="whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200 font-mono text-sm p-4">
-                {data}
-            </pre>
-        );
-    }
+    const formattedLines = useMemo(() => {
+        if (!data) return [""];
+        try {
+            const parsed = JSON.parse(data);
+            const pretty = JSON.stringify(parsed, null, 2);
+            return pretty.split("\n");
+        } catch {
+            // Raw text fallback split by lines
+            return data.split("\n");
+        }
+    }, [data]);
 
     return (
-        <div className="p-4 w-full">
-            <JsonNode value={parsedData} />
+        <div className="py-3 font-mono text-xs select-text min-h-full">
+            {formattedLines.map((line, index) => (
+                <div
+                    key={index}
+                    className="flex hover:bg-black/[0.025] dark:hover:bg-white/[0.035] py-0.5 leading-5 transition-colors"
+                >
+                    <span className="w-11 shrink-0 text-right pr-3.5 text-[#8a7e72]/60 dark:text-[#6e665d] select-none text-[11px] tabular-nums border-r border-[#ded7ce]/40 dark:border-white/5 bg-black/[0.015] dark:bg-white/[0.015]">
+                        {index + 1}
+                    </span>
+                    <span className="flex-1 whitespace-pre break-all pl-3.5 pr-4 text-[#2c211c] dark:text-[#f3eeea]">
+                        {highlightJsonLine(line)}
+                    </span>
+                </div>
+            ))}
         </div>
     );
 };

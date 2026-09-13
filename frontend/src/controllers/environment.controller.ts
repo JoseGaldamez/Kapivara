@@ -34,8 +34,25 @@ class EnvironmentController {
         const tasks: Promise<unknown>[] = [];
 
         if (!this.initializedProjects.has(projectId)) {
-            tasks.push(this.loadProjectEnvironments(projectId));
-            tasks.push(this.loadActiveProjectEnvironment(projectId));
+            const projectTask = (async () => {
+                const environments = await this.loadProjectEnvironments(projectId);
+                if (environments.length === 0) {
+                    await this.createEnvironment('project', 'Local', projectId, [
+                        {
+                            id: crypto.randomUUID(),
+                            key: 'baseUrl',
+                            value: '',
+                            enabled: 1
+                        }
+                    ]);
+                } else {
+                    const activeId = await this.loadActiveProjectEnvironment(projectId);
+                    if (!activeId && environments.length > 0) {
+                        await this.setActiveEnvironment('project', environments[0].id, projectId);
+                    }
+                }
+            })();
+            tasks.push(projectTask);
             this.initializedProjects.add(projectId);
         }
 
@@ -98,31 +115,42 @@ class EnvironmentController {
         }
     }
 
-    public async createEnvironment(scope: EnvironmentScope, name: string, projectId?: string) {
+    public async createEnvironment(
+        scope: EnvironmentScope,
+        name: string,
+        projectId?: string,
+        customInitialVariables?: EnvironmentVariable[]
+    ) {
         const service = await this.getService();
 
-        // Find existing keys to populate empty rows in the new environment
-        const store = useEnvironmentStore.getState();
-        const existingEnvironments = (scope === 'project' && projectId)
-            ? (store.projectEnvironmentsByProject[projectId] || [])
-            : store.globalEnvironments;
+        let initialVars: EnvironmentVariable[] = [];
 
-        const uniqueKeys = new Set<string>();
-        existingEnvironments.forEach(env => {
-            const parsed = this.parseEnvironmentVariables(env);
-            parsed.forEach(v => {
-                if (v.key.trim() !== '') {
-                    uniqueKeys.add(v.key.trim());
-                }
+        if (customInitialVariables && customInitialVariables.length > 0) {
+            initialVars = customInitialVariables;
+        } else {
+            // Find existing keys to populate empty rows in the new environment
+            const store = useEnvironmentStore.getState();
+            const existingEnvironments = (scope === 'project' && projectId)
+                ? (store.projectEnvironmentsByProject[projectId] || [])
+                : store.globalEnvironments;
+
+            const uniqueKeys = new Set<string>();
+            existingEnvironments.forEach(env => {
+                const parsed = this.parseEnvironmentVariables(env);
+                parsed.forEach(v => {
+                    if (v.key.trim() !== '') {
+                        uniqueKeys.add(v.key.trim());
+                    }
+                });
             });
-        });
 
-        const initialVars: EnvironmentVariable[] = Array.from(uniqueKeys).map(key => ({
-            id: crypto.randomUUID(),
-            key,
-            value: '',
-            enabled: 1
-        }));
+            initialVars = Array.from(uniqueKeys).map(key => ({
+                id: crypto.randomUUID(),
+                key,
+                value: '',
+                enabled: 1
+            }));
+        }
 
         const created = await service.createEnvironment(scope, name.trim(), projectId);
 

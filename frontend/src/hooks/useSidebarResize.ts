@@ -12,7 +12,8 @@ export function useSidebarResize() {
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isResizing) return;
-            const newWidth = e.clientX;
+            const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
+            const newWidth = e.clientX - sidebarLeft;
             if (newWidth > MIN_WIDTH && newWidth < MAX_WIDTH) {
                 setWidth(newWidth);
             }
@@ -26,18 +27,27 @@ export function useSidebarResize() {
             document.addEventListener("mousemove", handleMouseMove);
             document.addEventListener("mouseup", handleMouseUp);
             document.body.style.userSelect = "none";
+            document.body.style.cursor = "col-resize";
         } else {
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
             document.body.style.userSelect = "";
+            document.body.style.cursor = "";
         }
 
         return () => {
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
             document.body.style.userSelect = "";
+            document.body.style.cursor = "";
         };
     }, [isResizing]);
 
-    return { width, sidebarRef, startResizing: () => setIsResizing(true) };
+    const startResizing = (e?: React.MouseEvent) => {
+        e?.preventDefault();
+        window.getSelection()?.removeAllRanges();
+        setIsResizing(true);
+    };
+
+    return { width, sidebarRef, startResizing };
 }

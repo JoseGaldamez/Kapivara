@@ -34,7 +34,8 @@ class RequestService {
                  (SELECT json_group_array(json_object('id', rh.id, 'key', rh.key, 'value', rh.value, 'is_active', rh.is_active)) 
                   FROM request_headers rh 
                   WHERE rh.request_id = r.id) as headers,
-                 (SELECT json_object('id', ra.id, 'auth_type', ra.auth_type, 'auth_data', ra.auth_data)
+                 (SELECT json_object('id', ra.id, 'auth_type', ra.auth_type, 'auth_data', 
+                    CASE WHEN ra.auth_data IS NOT NULL AND json_valid(ra.auth_data) THEN json(ra.auth_data) ELSE ra.auth_data END)
                   FROM request_auth ra
                   WHERE ra.request_id = r.id) as auth
             FROM requests r 
@@ -286,12 +287,19 @@ class RequestService {
             }
 
             if (authObj) {
+                let serializedAuthData: string | null = null;
+                if (authObj.auth_data !== undefined && authObj.auth_data !== null) {
+                    serializedAuthData = typeof authObj.auth_data === 'string'
+                        ? authObj.auth_data
+                        : JSON.stringify(authObj.auth_data);
+                }
+
                 const existingAuth = await this.dbService.select<any[]>('SELECT id FROM request_auth WHERE request_id = $1', [request.id]);
                 if (existingAuth && existingAuth.length > 0) {
                     const updateAuthQuery = `UPDATE request_auth SET auth_type = $1, auth_data = $2 WHERE request_id = $3`;
                     await this.dbService.execute(updateAuthQuery, [
                         authObj.auth_type || 'none',
-                        authObj.auth_data || null,
+                        serializedAuthData,
                         request.id
                     ]);
                 } else {
@@ -300,7 +308,7 @@ class RequestService {
                         crypto.randomUUID(),
                         request.id,
                         authObj.auth_type || 'none',
-                        authObj.auth_data || null
+                        serializedAuthData
                     ]);
                 }
             }

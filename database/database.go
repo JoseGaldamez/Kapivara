@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -159,9 +160,29 @@ func (db *DB) migrate() error {
 	return nil
 }
 
+// cleanArgs normaliza los argumentos para el driver SQLite, serializando mapas y slices a cadenas JSON.
+func cleanArgs(args []interface{}) []interface{} {
+	if len(args) == 0 {
+		return args
+	}
+	cleaned := make([]interface{}, len(args))
+	for i, arg := range args {
+		switch v := arg.(type) {
+		case map[string]interface{}, []interface{}:
+			if b, err := json.Marshal(v); err == nil {
+				cleaned[i] = string(b)
+				continue
+			}
+		}
+		cleaned[i] = arg
+	}
+	return cleaned
+}
+
 // Select ejecuta una consulta de lectura SQL y retorna los registros en formato genérico.
 func (db *DB) Select(query string, args []interface{}) ([]map[string]interface{}, error) {
-	rows, err := db.conn.Query(query, args...)
+	cleanedArgs := cleanArgs(args)
+	rows, err := db.conn.Query(query, cleanedArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +232,7 @@ func (db *DB) Select(query string, args []interface{}) ([]map[string]interface{}
 
 // Execute ejecuta una consulta de escritura SQL (INSERT, UPDATE, DELETE).
 func (db *DB) Execute(query string, args []interface{}) error {
-	_, err := db.conn.Exec(query, args...)
+	cleanedArgs := cleanArgs(args)
+	_, err := db.conn.Exec(query, cleanedArgs...)
 	return err
 }

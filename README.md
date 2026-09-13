@@ -2,7 +2,7 @@
 
 ![Kapivara Logo](frontend/src/assets/logo-kapivara.png)
 
-**A modern, high-performance desktop application built for efficiency.**
+**A focused, local-first REST client for calm and efficient API work.**
 
 [![Download Now](https://img.shields.io/badge/Download_Now-www.kapivara.dev-2ea44f?style=for-the-badge)](https://www.kapivara.dev/)
 
@@ -12,9 +12,18 @@
 
 ## 🚀 About The Project (Tauri → Wails Migration)
 
-Kapivara is a powerful desktop application designed to provide a seamless user experience. Originally built with **Tauri** (Rust), the application has been migrated to **Wails** (Go) to improve backend modularity, development velocity, and system resource management.
+Kapivara is a desktop REST client for organizing projects, requests, environments, variables, and responses locally. Originally built with **Tauri** (Rust), the application has been migrated to **Wails** (Go) to improve backend modularity, development velocity, and system resource management.
 
-While many desktop applications are bloated and slow, Kapivara focuses on speed, security, and a minimal footprint, combining the lightweight execution of Go on the backend with a premium, responsive React-TS webview on the frontend.
+The current interface uses a restrained professional visual system: a compact custom window bar, direct project and environment selection, persistent navigation, and a focused request workspace. Go powers the backend while React and TypeScript provide the desktop webview.
+
+### Current interface
+
+- Custom frameless Wails window with integrated minimize, maximize, restore, and close controls.
+- Persistent project and environment selectors in the top bar.
+- Global navigation for Requests, Environments, Variables, History, and Settings.
+- Local project storage through SQLite.
+- Project and global environment variables with deterministic override behavior.
+- Session request history and a focused request/response workspace.
 
 ## 🛠️ Built With
 
@@ -30,7 +39,7 @@ This project is built using a modern technology stack to ensure performance and 
 
 ## 📦 Version and Status
 
-**Current Version:** `0.2.0` (Wails Migration Beta)
+**Current Version:** `0.1.10` (Wails Migration Beta)
 
 > [!NOTE]  
 > Kapivara is currently in active development. Features may change as we iterate towards the v1.0 release.

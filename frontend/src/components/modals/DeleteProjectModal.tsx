@@ -26,30 +26,30 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#201b18]/55 p-5 dark:bg-black/70">
+            <div className="w-full max-w-md rounded-[10px] border border-[#d9d2cb] bg-[#fffdf9] p-7 shadow-[0_22px_60px_rgba(38,29,23,0.22)] dark:border-white/10 dark:bg-[#1d1e23]" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <AlertTriangle className="text-red-500" />
-                        Delete Project
+                    <h2 className="flex items-center gap-3 text-xl font-semibold tracking-[-0.025em] text-[#342b26] dark:text-[#fff3e9]">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"><AlertTriangle size={20} /></span>
+                        Delete project
                     </h2>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
-                        <X size={20} />
+                    <button type="button" aria-label="Close delete project dialog" onClick={onClose} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[11px] text-[#8e776b] transition-colors hover:bg-[#f1e5db] hover:text-[#382219] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0E61B1] dark:text-[#98938f] dark:hover:bg-white/7 dark:hover:text-white">
+                        <X size={18} />
                     </button>
                 </div>
 
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                <p className="mb-4 text-sm leading-6 text-[#725e54] dark:text-[#b3aca7]">
                     Are you sure you want to delete all the APIs in the project <span className="font-bold text-gray-800 dark:text-white">"{projectName}"</span>?
                 </p>
-                <p className="text-red-700 dark:text-red-400 mb-6 bg-red-50 dark:bg-red-900/20 py-2 px-4 rounded-xl">
-                    This action cannot be undone
+                <p className="mb-6 rounded-[12px] bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                    This removes the local workspace and cannot be undone.
                 </p>
 
-                <div className="flex items-center justify-end gap-3">
+                <div className="flex items-center justify-end gap-2 border-t border-[#eadfd6] pt-5 dark:border-white/8">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium transition-colors cursor-pointer"
+                        className="h-10 cursor-pointer rounded-[11px] px-4 text-sm font-bold text-[#725b50] transition-colors hover:bg-[#f0e4da] dark:text-[#c2b9b3] dark:hover:bg-white/7"
                         disabled={isLoading}
                     >
                         Cancel
@@ -58,7 +58,7 @@ export const DeleteProjectModal = ({ isOpen, onClose, onConfirm, projectName }: 
                         type="button"
                         onClick={handleConfirm}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+                        className="flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-red-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-45"
                     >
                         {isLoading ? "Deleting..." : "Delete Project"}
                     </button>

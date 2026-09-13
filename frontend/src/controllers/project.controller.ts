@@ -1,6 +1,7 @@
 import { useProjectStore } from '../stores/project.store';
 import ProjectService from '../services/projects.service';
 import { Project } from '../types';
+import { environmentController } from './environment.controller';
 
 class ProjectController {
     private service: ProjectService | null = null;
@@ -26,7 +27,7 @@ class ProjectController {
         }
     }
 
-    public async createNewProject(name: string, description: string, iconColor: string) {
+    public async createNewProject(name: string, description: string, iconColor: string, baseUrl?: string) {
         try {
             const service = await this.getService();
 
@@ -40,6 +41,17 @@ class ProjectController {
 
             await service.createProject(newProject);
             useProjectStore.getState().addProject(newProject);
+
+            // Automatically create 'Local' environment with baseUrl
+            await environmentController.createEnvironment('project', 'Local', newProject.uid, [
+                {
+                    id: crypto.randomUUID(),
+                    key: 'baseUrl',
+                    value: baseUrl ? baseUrl.trim() : '',
+                    enabled: 1
+                }
+            ]);
+
             return newProject;
         } catch (error) {
             console.error('Failed to create project:', error);
@@ -47,6 +59,17 @@ class ProjectController {
         }
     }
 
+
+    public async updateProject(projectId: string, updates: Partial<Project>) {
+        try {
+            const service = await this.getService();
+            await service.updateProject({ uid: projectId, ...updates });
+            useProjectStore.getState().updateProject(projectId, updates);
+        } catch (error) {
+            console.error('Failed to update project:', error);
+            throw error;
+        }
+    }
 
     public async deleteProject(projectId: string) {
         try {
@@ -61,15 +84,11 @@ class ProjectController {
     }
 
     public openProject(project: Project) {
-        useProjectStore.getState().openProjectTab(project);
+        useProjectStore.getState().selectProject(project.uid);
     }
 
-    public selectTab(tabId: string) {
-        useProjectStore.getState().setActiveTab(tabId);
-    }
-
-    public closeTab(tabId: string) {
-        useProjectStore.getState().closeTab(tabId);
+    public goHome() {
+        useProjectStore.getState().selectProject(null);
     }
 }
 

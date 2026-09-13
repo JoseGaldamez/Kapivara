@@ -24,26 +24,26 @@ export const OptionsCard = ({ project, setIsOpen, deleteThisProject }: OptionsCa
                     setIsOpen(false);
                 }}
             />
-            <div className="absolute right-0 top-12 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-[#0E61B1]/10 z-20 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 top-11 z-30 flex w-40 flex-col overflow-hidden rounded-lg border border-[#d8d1ca] bg-white p-1 shadow-[0_10px_26px_rgba(45,34,27,0.13)] dark:border-white/10 dark:bg-[#222329]">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         handleExport();
                         setIsOpen(false);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-200 hover:bg-[#0E61B1]/5 hover:text-[#0E61B1] transition-colors text-left cursor-pointer"
+                    className="flex cursor-pointer items-center gap-2 rounded-[9px] px-3 py-2 text-left text-sm text-[#6f594e] transition-colors hover:bg-[#edf5fd] hover:text-[#0E61B1] dark:text-[#d5cec9] dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
                 >
                     <Download className="w-4 h-4" />
                     Export
                 </button>
-                <div className="h-px bg-gray-100 mx-2" />
+                <div className="mx-2 h-px bg-[#eee3da] dark:bg-white/7" />
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         deleteThisProject(project);
                         setIsOpen(false);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 transition-colors text-left cursor-pointer"
+                    className="flex cursor-pointer items-center gap-2 rounded-[9px] px-3 py-2 text-left text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10"
                 >
                     <Trash2 className="w-4 h-4" />
                     Delete

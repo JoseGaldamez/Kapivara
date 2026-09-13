@@ -159,33 +159,33 @@ export const RequestConsole = () => {
     }, [isDragging]);
 
     return (
-        <div className="shrink-0 flex flex-col border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors">
+        <div className="shrink-0 flex flex-col border-t border-[#ded7ce]/60 dark:border-white/8 bg-[#fffdf9] dark:bg-[#18191e] transition-colors">
             {/* Drag handle — only visible when open */}
             {isOpen && (
                 <div
                     onMouseDown={onMouseDown}
-                    className={`w-full h-1.5 cursor-ns-resize hover:bg-blue-400 dark:hover:bg-blue-600 transition-colors ${isDragging ? 'bg-blue-400 dark:bg-blue-600' : 'bg-transparent'}`}
+                    className={`w-full h-1.5 cursor-ns-resize hover:bg-[#0066ff] dark:hover:bg-[#0066ff] transition-colors ${isDragging ? 'bg-[#0066ff]' : 'bg-transparent'}`}
                 />
             )}
 
             {/* Console bar */}
             <button
                 onClick={toggle}
-                className="flex items-center gap-2 px-4 py-1.5 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none"
+                className="flex items-center gap-2 px-4 py-2 w-full text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors select-none cursor-pointer"
             >
-                <Terminal size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex-1">
+                <Terminal size={14} className="text-[#8a7e72] dark:text-[#6e665d] shrink-0" />
+                <span className="text-xs font-semibold text-[#5f554e] dark:text-[#a89f91] flex-1">
                     Console
                     {entries.length > 0 && (
-                        <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#0E61B1] text-white text-[10px]">
+                        <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#0066ff] text-white text-[10px] font-mono font-bold">
                             {entries.length > 99 ? '99+' : entries.length}
                         </span>
                     )}
                 </span>
                 {isOpen ? (
-                    <ChevronDown size={13} className="text-gray-400 shrink-0" />
+                    <ChevronDown size={13} className="text-[#8a7e72] shrink-0" />
                 ) : (
-                    <ChevronUp size={13} className="text-gray-400 shrink-0" />
+                    <ChevronUp size={13} className="text-[#8a7e72] shrink-0" />
                 )}
             </button>
 

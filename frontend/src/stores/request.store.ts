@@ -8,9 +8,12 @@ interface RequestState {
     collectionsByProject: Record<string, Collection[]>;
     activeRequestIdByProject: Record<string, string | null>;
     savedResponsesByRequest: Record<string, SavedResponse[]>;
+    activeTabByRequest: Record<string, string>;
+    lastActiveTab: string;
 
     // Actions
     setActiveRequest: (projectId: string, requestId: string | null) => void;
+    setActiveTabForRequest: (requestId: string, tab: string) => void;
     setRequests: (projectId: string, requests: RequestInfo[]) => void;
     setCollections: (projectId: string, collections: Collection[]) => void;
     addRequest: (request: RequestInfo) => void;
@@ -27,6 +30,8 @@ export const useRequestStore = create<RequestState>((set) => ({
     collectionsByProject: {},
     activeRequestIdByProject: {},
     savedResponsesByRequest: {},
+    activeTabByRequest: {},
+    lastActiveTab: 'Body',
     requests: [],
 
     setActiveRequest: (projectId, requestId) => set((state) => ({
@@ -34,6 +39,14 @@ export const useRequestStore = create<RequestState>((set) => ({
             ...state.activeRequestIdByProject,
             [projectId]: requestId
         }
+    })),
+
+    setActiveTabForRequest: (requestId, tab) => set((state) => ({
+        activeTabByRequest: {
+            ...state.activeTabByRequest,
+            [requestId]: tab
+        },
+        lastActiveTab: tab
     })),
 
     setRequests: (projectId, requests) => set((state) => ({
@@ -96,14 +109,18 @@ export const useRequestStore = create<RequestState>((set) => ({
         }
     })),
 
-    removeRequest: (projectId, requestId) => set((state) => ({
-        requestsByProject: {
-            ...state.requestsByProject,
-            [projectId]: (state.requestsByProject[projectId] || []).filter(r => r.id !== requestId)
-        },
-        activeRequestIdByProject: {
-            ...state.activeRequestIdByProject,
-            [projectId]: state.activeRequestIdByProject[projectId] === requestId ? null : state.activeRequestIdByProject[projectId]
-        }
-    })),
+    removeRequest: (projectId, requestId) => set((state) => {
+        const { [requestId]: _, ...restTabs } = state.activeTabByRequest;
+        return {
+            requestsByProject: {
+                ...state.requestsByProject,
+                [projectId]: (state.requestsByProject[projectId] || []).filter(r => r.id !== requestId)
+            },
+            activeRequestIdByProject: {
+                ...state.activeRequestIdByProject,
+                [projectId]: state.activeRequestIdByProject[projectId] === requestId ? null : state.activeRequestIdByProject[projectId]
+            },
+            activeTabByRequest: restTabs
+        };
+    }),
 }));

@@ -1,14 +1,71 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Geist Sans", "Outfit", system-ui, sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
+  --font-sans: "IBM Plex Sans", "Avenir Next", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 .dark {
     color-scheme: dark;
+}
+
+/* Wails frameless window chrome */
+.window-drag-region {
+  --wails-draggable: drag;
+  user-select: none;
+}
+
+.window-drag-region button,
+.window-drag-region input,
+.window-drag-region [role="menu"] {
+  --wails-draggable: no-drag;
+}
+
+.window-controls {
+  --wails-draggable: no-drag;
+  align-self: stretch;
+  height: 100%;
+}
+
+.window-control-button {
+  display: flex;
+  width: 46px;
+  height: 100%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: #5f554e;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.window-control-button:hover {
+  background: #e9e4df;
+  color: #211b18;
+}
+
+.window-control-button:focus-visible {
+  outline: 2px solid #28679f;
+  outline-offset: -2px;
+}
+
+.window-control-close:hover {
+  background: #c42b1c;
+  color: white;
+}
+
+.dark .window-control-button {
+  color: #c9c4c0;
+}
+
+.dark .window-control-button:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+}
+
+.dark .window-control-close:hover {
+  background: #c42b1c;
 }
 
 /* 🍎 Apple-Inspired Custom WebKit Scrollbars */
@@ -51,10 +108,100 @@
   animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Home — warm API worktable */
+.home-shell {
+  position: relative;
+  isolation: isolate;
+  background-image: radial-gradient(circle at 20% 14%, rgba(185, 128, 78, 0.07), transparent 25rem);
+}
+
+.dark .home-shell {
+  background-image: radial-gradient(circle at 20% 14%, rgba(184, 125, 73, 0.045), transparent 25rem);
+}
+
+.home-art-halo {
+  background: radial-gradient(circle at 42% 36%, rgba(255, 252, 248, 0.8), rgba(220, 191, 165, 0.16) 58%, transparent 72%);
+}
+
+.dark .home-art-halo {
+  background: radial-gradient(circle at 42% 36%, rgba(217, 149, 87, 0.16), rgba(217, 149, 87, 0.055) 58%, transparent 72%);
+}
+
+.home-value-icon-copper {
+  background: #f1e8df;
+  color: #8f5b36;
+}
+
+.home-value-icon-green {
+  background: #e8efea;
+  color: #367557;
+}
+
+.home-value-icon-blue {
+  background: #e8eef4;
+  color: #275f91;
+}
+
+.dark .home-value-icon-copper {
+  background: rgba(217, 149, 87, 0.12);
+  color: #e9a66c;
+}
+
+.dark .home-value-icon-green {
+  background: rgba(34, 148, 90, 0.12);
+  color: #54c886;
+}
+
+.dark .home-value-icon-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #65a7ee;
+}
+
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-mascot-settle {
+  0% { transform: translateY(6px) rotate(-0.6deg); }
+  60% { transform: translateY(-2px) rotate(0.25deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+
+.home-reveal {
+  animation: home-reveal 380ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+.home-reveal-delay-2 {
+  animation-delay: 90ms;
+}
+
+.home-reveal-delay-3 {
+  animation-delay: 160ms;
+}
+
+.home-mascot {
+  animation: home-mascot-settle 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal,
+  .home-mascot {
+    animation: none;
+  }
+}
+
 /* 📐 Cushioned Interactive Resizers Target Cushion */
 .cushioned-resizer-ns {
   position: relative;
-  z-index: 40;
+  z-index: 10;
+  user-select: none;
 }
 .cushioned-resizer-ns::before {
   content: "";
@@ -65,11 +212,13 @@
   right: 0;
   cursor: ns-resize;
   background: transparent;
-  z-index: 50;
+  z-index: 20;
+  user-select: none;
 }
 
 .cushioned-resizer-ew {
-  z-index: 40;
+  z-index: 10;
+  user-select: none;
 }
 .cushioned-resizer-ew::before {
   content: "";
@@ -80,5 +229,138 @@
   bottom: 0;
   cursor: col-resize;
   background: transparent;
-  z-index: 50;
+  z-index: 20;
+  user-select: none;
 }
+
+/* 🍞 Kapivara Custom Desktop Toast System */
+:root {
+  --toastify-toast-width: auto;
+  --toastify-toast-min-height: 42px;
+  --toastify-toast-max-height: 240px;
+  --toastify-toast-padding: 8px 12px;
+  --toastify-toast-bd-radius: 12px;
+  --toastify-font-family: var(--font-sans);
+  --toastify-z-index: 99999;
+}
+
+.Toastify__toast-container--bottom-right {
+  bottom: 20px !important;
+  right: 20px !important;
+  padding: 0 !important;
+  width: auto !important;
+  max-width: 420px !important;
+  min-width: 270px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  pointer-events: none;
+}
+
+.Toastify__toast-container * {
+  pointer-events: auto;
+}
+
+.Toastify__toast {
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  min-height: 42px !important;
+  padding: 8px 12px !important;
+  margin-bottom: 0 !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.Toastify--animate {
+  animation-duration: 0.25s !important;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Light Mode Toast Card */
+.Toastify__toast-theme--light {
+  background: #fffdf9 !important;
+  color: #2c211c !important;
+  border: 1px solid #ded7ce !important;
+  box-shadow: 0 4px 16px -2px rgba(44, 33, 28, 0.08), 0 2px 6px -1px rgba(44, 33, 28, 0.04) !important;
+}
+
+/* Dark Mode Toast Card */
+.dark .Toastify__toast,
+.Toastify__toast-theme--dark {
+  background: #18191e !important;
+  color: #f8eee5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 2px 8px -2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Subtle Type-specific borders */
+.Toastify__toast-theme--light.Toastify__toast--success {
+  border-color: rgba(34, 197, 94, 0.38) !important;
+}
+.Toastify__toast-theme--light.Toastify__toast--error {
+  border-color: rgba(239, 68, 68, 0.38) !important;
+}
+.Toastify__toast-theme--light.Toastify__toast--warning {
+  border-color: rgba(245, 158, 11, 0.38) !important;
+}
+.Toastify__toast-theme--light.Toastify__toast--info {
+  border-color: rgba(56, 189, 248, 0.38) !important;
+}
+
+.Toastify__toast-theme--dark.Toastify__toast--success,
+.dark .Toastify__toast--success {
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+.Toastify__toast-theme--dark.Toastify__toast--error,
+.dark .Toastify__toast--error {
+  border-color: rgba(239, 68, 68, 0.32) !important;
+}
+.Toastify__toast-theme--dark.Toastify__toast--warning,
+.dark .Toastify__toast--warning {
+  border-color: rgba(245, 158, 11, 0.32) !important;
+}
+.Toastify__toast-theme--dark.Toastify__toast--info,
+.dark .Toastify__toast--info {
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Icon Container Reset */
+.Toastify__toast-icon {
+  width: auto !important;
+  margin-inline-end: 0 !important;
+  margin-right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Toast Body Reset */
+.Toastify__toast-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+}
+
+/* Keep progress bar in DOM with zero height/opacity so CSS animationend fires for autoClose */
+.Toastify__progress-bar--wrp {
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+

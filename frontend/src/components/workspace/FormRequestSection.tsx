@@ -1,10 +1,11 @@
 import { METHODS_COLORS } from '@/utils/methods.constants';
-import { Play, Save } from 'lucide-react';
+import { Send, ChevronDown, AlertCircle } from 'lucide-react';
 import { Select } from '@/components/common/Select';
 import { VarBadge } from '@/components/common/VarBadge';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Environment, EnvironmentVariable } from '@/types';
 import { environmentController } from '@/controllers/environment.controller';
+import { resolveTemplateString } from '@/utils/environment-resolver';
 import { toast } from 'react-toastify';
 
 interface FormRequestSectionProps {
@@ -12,10 +13,8 @@ interface FormRequestSectionProps {
     url: string;
     isLoading: boolean;
     handleSend: () => void;
-    handleSave: () => void;
     handleMethodChange: (method: string) => void;
     handleUrlChange: (url: string) => void;
-    isDirty?: boolean;
     variableKeys?: string[];
     variablePreview?: Record<string, string>;
     projectId?: string;
@@ -36,21 +35,39 @@ interface AddVarState {
 }
 
 const METHODS = Object.keys(METHODS_COLORS);
-const METHOD_OPTIONS = METHODS.map(m => ({
-    label: m,
-    value: m,
-    className: METHODS_COLORS[m as keyof typeof METHODS_COLORS]
-}));
 
 export const FormRequestSection = ({
-    method, url, isLoading, handleSend, handleSave, handleMethodChange, handleUrlChange,
-    isDirty, variableKeys = [], variablePreview = {},
+    method, url, isLoading, handleSend, handleMethodChange, handleUrlChange,
+    variableKeys = [], variablePreview = {},
     projectId, activeProjectEnvironmentId = null, activeGlobalEnvironmentId = null,
     projectEnvironments = [], globalEnvironments = [], onVariableAdded
 }: FormRequestSectionProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isFocused, setIsFocused] = useState(false);
     const [addVarState, setAddVarState] = useState<AddVarState | null>(null);
+    const [showBaseUrlWarning, setShowBaseUrlWarning] = useState(false);
+
+    // Auto-focus and place cursor immediately after {{baseUrl}}/ on new request
+    useEffect(() => {
+        if (url === "{{baseUrl}}/") {
+            setIsFocused(true);
+            const timer = setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    const len = inputRef.current.value.length;
+                    inputRef.current.setSelectionRange(len, len);
+                }
+            }, 60);
+            return () => clearTimeout(timer);
+        }
+    }, [url]);
+
+    // Hide warning if baseUrl is now populated or URL doesn't use {{baseUrl}}
+    useEffect(() => {
+        if (!url.includes("{{baseUrl}}") || (variablePreview["baseUrl"] && variablePreview["baseUrl"].trim() !== "")) {
+            setShowBaseUrlWarning(false);
+        }
+    }, [url, variablePreview]);
 
     const detectedVariables = Array.from(url.matchAll(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g));
 
@@ -175,87 +192,168 @@ export const FormRequestSection = ({
         return parts;
     };
 
+    const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
+    const methodMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (methodMenuRef.current && !methodMenuRef.current.contains(e.target as Node)) {
+                setIsMethodMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const onSendClick = () => {
+        if (!url) return;
+
+        // Check if url uses {{baseUrl}} and baseUrl is empty or undefined
+        if (url.includes("{{baseUrl}}")) {
+            const baseUrlVal = variablePreview["baseUrl"];
+            if (!baseUrlVal || !baseUrlVal.trim()) {
+                setShowBaseUrlWarning(true);
+                return;
+            }
+        }
+
+        setShowBaseUrlWarning(false);
+        handleSend();
+    };
+
+    const activeProjectEnv = projectEnvironments.find(e => e.id === activeProjectEnvironmentId);
+    const activeEnvName = activeProjectEnv ? activeProjectEnv.name : "Local";
+
+    const resolvedFullUrl = resolveTemplateString(url, variablePreview);
+    const hasResolvedDifference = url.includes("{{") && resolvedFullUrl !== url && !showBaseUrlWarning && !!variablePreview["baseUrl"]?.trim();
+
     return (
-        <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/50 bg-white dark:bg-[#16161E] transition-colors">
-            <div className="flex gap-2">
-                <div className="flex-1 flex items-center bg-slate-50 dark:bg-slate-900/60 rounded-xl p-1 border border-slate-200/60 dark:border-slate-800/50 focus-within:border-[#0E61B1] dark:focus-within:border-blue-500/80 focus-within:bg-white dark:focus-within:bg-[#0D0D11] focus-within:shadow-[0_0_12px_rgba(14,97,177,0.1)] dark:focus-within:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all min-w-0">
-                    <Select
-                        value={method}
-                        onChange={handleMethodChange}
-                        options={METHOD_OPTIONS}
-                        className="w-28 font-bold text-sm"
-                    />
-                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
-
-                    {/* URL area: editable input or highlighted overlay */}
-                    <div
-                        className="flex-1 min-w-0 relative cursor-text"
-                        onClick={() => inputRef.current?.focus()}
+        <div className="p-4 border-b border-[#ded7ce]/60 dark:border-white/8 bg-[#fffdf9] dark:bg-[#18191e] transition-colors">
+            <div className="flex items-center gap-2">
+                {/* Method selector button with dropdown */}
+                <div className="relative shrink-0" ref={methodMenuRef}>
+                    <button
+                        type="button"
+                        onClick={() => setIsMethodMenuOpen((prev) => !prev)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#ded7ce] dark:border-white/10 bg-white dark:bg-[#20222a] hover:bg-[#f6f2ec] dark:hover:bg-[#262833] text-xs font-bold font-mono transition-colors cursor-pointer shadow-xs ${
+                            METHODS_COLORS[method as keyof typeof METHODS_COLORS] || "text-[#1a1714] dark:text-[#f4eadf]"
+                        }`}
                     >
-                        {/* Actual input - always in DOM for focus, invisible when not focused */}
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            value={url}
-                            list="environment-variable-suggestions-url"
-                            onChange={(e) => handleUrlChange(e.target.value)}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={() => setIsFocused(false)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-                            placeholder="Enter request URL"
-                            className={`w-full bg-transparent text-sm focus:outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${
-                                !isFocused ? 'opacity-0 pointer-events-none absolute inset-0 h-full' : ''
-                            }`}
-                        />
+                        <span>{method === "DELETE" ? "DEL" : method}</span>
+                        <ChevronDown size={13} className={`text-[#8a7e72] transition-transform duration-150 ${isMethodMenuOpen ? "rotate-180" : ""}`} />
+                    </button>
 
-                        {/* Highlighted overlay - visible when not focused */}
-                        {!isFocused && (
-                            <div
-                                className="absolute inset-0 flex items-center text-sm overflow-hidden whitespace-nowrap"
-                                onClick={() => inputRef.current?.focus()}
-                            >
-                                {renderHighlightedUrl()}
-                            </div>
-                        )}
-
-                        {/* Invisible spacer to maintain height when using overlay */}
-                        {!isFocused && <div className="invisible text-sm py-0.5">&#8203;</div>}
-
-                        <datalist id="environment-variable-suggestions-url">
-                            {variableKeys.map((key) => (
-                                <option key={key} value={`{{${key}}}`} label={variablePreview[key] || ''} />
+                    {isMethodMenuOpen && (
+                        <div className="absolute left-0 mt-1 z-50 w-32 bg-[#fffdf9] dark:bg-[#1c1d24] border border-[#ded7ce] dark:border-white/10 rounded-xl shadow-xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {METHODS.map((m) => (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    onClick={() => {
+                                        handleMethodChange(m);
+                                        setIsMethodMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono text-left hover:bg-[#f6f2ec] dark:hover:bg-white/10 cursor-pointer transition-colors ${
+                                        METHODS_COLORS[m as keyof typeof METHODS_COLORS]
+                                    } ${method === m ? "bg-[#f6f2ec] dark:bg-white/10" : ""}`}
+                                >
+                                    {m === "DELETE" ? "DEL" : m}
+                                </button>
                             ))}
-                        </datalist>
-                    </div>
+                        </div>
+                    )}
                 </div>
 
-                <button
-                    onClick={handleSend}
-                    disabled={isLoading}
-                    className={`bg-[#0E61B1] text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0E61B1]/90 hover:scale-[1.015] active:scale-95 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-                        isLoading ? 'animate-pulse-breathe' : ''
-                    }`}
+                {/* URL input box */}
+                <div
+                    className="flex-1 min-w-0 relative flex items-center bg-white dark:bg-[#121316] rounded-xl px-3.5 py-2 border border-[#ded7ce] dark:border-white/10 focus-within:border-[#0066ff] focus-within:ring-2 focus-within:ring-[#0066ff]/15 transition-all cursor-text shadow-xs"
+                    onClick={() => inputRef.current?.focus()}
                 >
-                    <Play size={16} fill="currentColor" /> {isLoading ? "Sending..." : "Send"}
-                </button>
-                <button
-                    onClick={handleSave}
-                    className={`p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer relative border ${
-                        isDirty 
-                            ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 border-orange-250/30 dark:border-orange-900/30' 
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-[#0E61B1] dark:hover:text-blue-400 border-transparent hover:border-slate-200/50 dark:hover:border-slate-700/30'
-                    }`}
-                    title="Save Request"
-                >
-                    <Save size={20} />
-                    {isDirty && (
-                        <span className="absolute top-2 right-2 flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                        </span>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={url}
+                        list="environment-variable-suggestions-url"
+                        onChange={(e) => handleUrlChange(e.target.value)}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") onSendClick();
+                        }}
+                        placeholder="{{baseUrl}}/endpoint"
+                        className={`w-full bg-transparent text-xs font-mono focus:outline-none text-[#1a1714] dark:text-[#f4eadf] placeholder:text-[#8a7e72] dark:placeholder:text-[#6e665d] ${
+                            !isFocused ? "opacity-0 pointer-events-none absolute inset-0 h-full px-3.5 py-2" : ""
+                        }`}
+                    />
+
+                    {!isFocused && (
+                        <div
+                            className="absolute inset-0 flex items-center px-3.5 text-xs font-mono overflow-hidden whitespace-nowrap"
+                            onClick={() => inputRef.current?.focus()}
+                        >
+                            {renderHighlightedUrl()}
+                        </div>
                     )}
+
+                    {!isFocused && <div className="invisible text-xs font-mono py-0.5">&#8203;</div>}
+
+                    <datalist id="environment-variable-suggestions-url">
+                        {variableKeys.map((key) => (
+                            <option key={key} value={`{{${key}}}`} label={variablePreview[key] || ""} />
+                        ))}
+                    </datalist>
+                </div>
+
+                {/* Send Button */}
+                <button
+                    onClick={onSendClick}
+                    disabled={isLoading}
+                    className={`bg-[#0066ff] hover:bg-[#0055d4] text-white px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98] ${
+                        isLoading ? "animate-pulse" : ""
+                    }`}
+                >
+                    <Send size={13} className="shrink-0" />
+                    <span>{isLoading ? "Sending..." : "Send"}</span>
                 </button>
             </div>
+
+            {/* Resolved URL Preview */}
+            {hasResolvedDifference && (
+                <div className="mt-2 px-1 flex items-center gap-1.5 text-[11px] font-mono text-[#8a7e72] dark:text-[#a89f91] select-none animate-in fade-in duration-150">
+                    <span className="text-[10px] uppercase tracking-wider font-sans font-semibold text-[#8a7e72]/80">Resolved:</span>
+                    <span className="truncate text-[#342b26] dark:text-[#d8cec8]">{resolvedFullUrl}</span>
+                </div>
+            )}
+
+            {/* Warning banner when baseUrl is empty or undefined */}
+            {showBaseUrlWarning && (
+                <div className="mt-2.5 p-3 rounded-xl border border-amber-300/80 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>
+                            <strong>baseUrl</strong> is not defined for the <strong>{activeEnvName}</strong> environment.
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const envId = activeProjectEnvironmentId || projectEnvironments[0]?.id || "";
+                            setAddVarState({
+                                name: "baseUrl",
+                                selectedEnvId: envId,
+                                value: "",
+                                isUpdate: true,
+                                userEditedValue: false,
+                                userEditedEnv: false
+                            });
+                            setShowBaseUrlWarning(false);
+                        }}
+                        className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer shrink-0 shadow-xs"
+                    >
+                        Set baseUrl
+                    </button>
+                </div>
+            )}
 
             {/* Inline "Add variable to environment" form */}
             {addVarState && (
@@ -277,7 +375,7 @@ export const FormRequestSection = ({
                             value={addVarState.value}
                             onChange={(e) => setAddVarState(prev => prev ? { ...prev, value: e.target.value, userEditedValue: true } : null)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); if (e.key === 'Escape') setAddVarState(null); }}
-                            placeholder="Value"
+                            placeholder={addVarState.name === "baseUrl" ? "http://localhost:3000" : "Value"}
                             autoFocus
                             className="flex-1 min-w-32 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-violet-400"
                         />

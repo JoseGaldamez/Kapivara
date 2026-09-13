@@ -58,6 +58,9 @@ func TestMakeRequest_PostRaw(t *testing.T) {
 		if r.Method != "POST" {
 			t.Errorf("Expected method POST, got %s", r.Method)
 		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("Expected Content-Type application/json, got %s", r.Header.Get("Content-Type"))
+		}
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("Failed to read request body: %v", err)
@@ -79,6 +82,28 @@ func TestMakeRequest_PostRaw(t *testing.T) {
 	}
 	if resp.Body != body {
 		t.Errorf("Expected body to echo request, got '%s'", resp.Body)
+	}
+}
+
+func TestMakeRequest_PostJson_CustomContentType(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") != "application/problem+json" {
+			t.Errorf("Expected Content-Type application/problem+json, got %s", r.Header.Get("Content-Type"))
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`ok`))
+	}))
+	defer server.Close()
+
+	headers := map[string]string{
+		"Content-Type": "application/problem+json",
+	}
+	resp, err := MakeRequest("POST", server.URL, headers, `{}`, "json")
+	if err != nil {
+		t.Fatalf("MakeRequest failed: %v", err)
+	}
+	if resp.Status != 200 {
+		t.Errorf("Expected status 200, got %d", resp.Status)
 	}
 }
 

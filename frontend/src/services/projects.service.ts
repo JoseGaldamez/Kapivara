@@ -39,6 +39,23 @@ class ProjectService {
         ]);
     }
 
+    public async updateProject(project: Partial<Project> & { uid: string }): Promise<void> {
+        const db = await DBService.getInstance();
+        const query = `
+            UPDATE projects
+            SET name = COALESCE($1, name),
+                description = COALESCE($2, description),
+                iconColor = COALESCE($3, iconColor)
+            WHERE uid = $4
+        `;
+        await db.execute(query, [
+            project.name ?? null,
+            project.description !== undefined ? project.description : null,
+            project.iconColor !== undefined ? project.iconColor : null,
+            project.uid
+        ]);
+    }
+
     public async deleteProject(projectId: string): Promise<void> {
         const db = await DBService.getInstance();
         await db.execute('DELETE FROM projects WHERE uid = $1', [projectId]);
