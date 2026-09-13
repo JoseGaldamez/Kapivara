@@ -170,6 +170,7 @@ class RequestController {
             useRequestStore.getState().updateRequest({ id: requestId, project_id: projectId, method });
         } catch (error) {
             console.error('Failed to update request method:', error);
+            throw error;
         }
     }
 
@@ -418,6 +419,7 @@ class RequestController {
             useRequestStore.getState().updateRequest({ id: requestId, project_id: projectId, ...updates, is_dirty: false });
         } catch (error) {
             console.error('Failed to update request:', error);
+            throw error;
         }
     }
 

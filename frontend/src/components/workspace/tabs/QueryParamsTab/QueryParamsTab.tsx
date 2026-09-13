@@ -35,7 +35,7 @@ export const QueryParamsTab = ({
         }
     }, [initialParams]);
 
-    const updateParam = (id: string, field: keyof RequestParam, value: any) => {
+    const updateParam = <Key extends keyof RequestParam,>(id: string, field: Key, value: RequestParam[Key]) => {
         const newParams = localParams.map(p => p.id === id ? { ...p, [field]: value } : p);
         
         // Auto-add and remove empty logic

@@ -3,7 +3,6 @@ import { RequestInfo, Collection, SavedResponse } from '../types';
 
 interface RequestState {
     // State
-    requests: RequestInfo[];
     requestsByProject: Record<string, RequestInfo[]>;
     collectionsByProject: Record<string, Collection[]>;
     activeRequestIdByProject: Record<string, string | null>;
@@ -32,8 +31,6 @@ export const useRequestStore = create<RequestState>((set) => ({
     savedResponsesByRequest: {},
     activeTabByRequest: {},
     lastActiveTab: 'Body',
-    requests: [],
-
     setActiveRequest: (projectId, requestId) => set((state) => ({
         activeRequestIdByProject: {
             ...state.activeRequestIdByProject,

@@ -47,7 +47,7 @@ export const UrlEncodedType = ({
         }
     }, [initialValue]);
 
-    const updateItem = (id: string, field: keyof UrlEncodedItem, val: any) => {
+    const updateItem = <Key extends keyof UrlEncodedItem,>(id: string, field: Key, val: UrlEncodedItem[Key]) => {
         const newItems = localItems.map(h => h.id === id ? { ...h, [field]: val } : h);
         
         const lastItem = newItems[newItems.length - 1];

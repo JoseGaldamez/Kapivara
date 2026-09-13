@@ -76,7 +76,7 @@ class ProjectController {
             const service = await this.getService();
             await service.deleteProject(projectId);
             useProjectStore.getState().removeProject(projectId);
-            this.loadProjects();
+            await this.loadProjects();
         } catch (error) {
             console.error('Failed to delete project:', error);
             throw error;

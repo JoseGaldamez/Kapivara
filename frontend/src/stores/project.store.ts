@@ -4,19 +4,16 @@ import { Project } from "../types";
 interface ProjectState {
     projects: Project[];
     activeProjectId: string | null;
-    isSettingsOpen: boolean;
     setProjects: (projects: Project[]) => void;
     addProject: (project: Project) => void;
     selectProject: (projectId: string | null) => void;
     removeProject: (projectId: string) => void;
     updateProject: (projectId: string, updates: Partial<Project>) => void;
-    setSettingsOpen: (isOpen: boolean) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
     projects: [],
     activeProjectId: null,
-    isSettingsOpen: false,
 
     setProjects: (projects) => set((state) => ({
         projects,
@@ -41,6 +38,4 @@ export const useProjectStore = create<ProjectState>((set) => ({
             project.uid === projectId ? { ...project, ...updates } : project
         ),
     })),
-
-    setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
 }));

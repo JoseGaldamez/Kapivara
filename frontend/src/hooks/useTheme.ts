@@ -1,33 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/stores/settings.store';
 import { AppTheme } from '@/types/settings';
 
+export type ResolvedTheme = 'light' | 'dark';
+
+const getResolvedTheme = (theme: AppTheme): ResolvedTheme => {
+    if (theme !== 'auto') return theme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 export const useTheme = () => {
     const theme = useSettingsStore(state => state.settings.theme);
+    const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => getResolvedTheme(theme));
 
     useEffect(() => {
         const root = window.document.documentElement;
-
-        const applyTheme = (targetTheme: AppTheme) => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const applyTheme = () => {
+            const nextTheme = theme === 'auto'
+                ? (mediaQuery.matches ? 'dark' : 'light')
+                : theme;
             root.classList.remove('light', 'dark');
-
-            if (targetTheme === 'auto') {
-                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                root.classList.add(systemTheme);
-            } else {
-                root.classList.add(targetTheme);
-            }
+            root.classList.add(nextTheme);
+            setResolvedTheme(nextTheme);
         };
 
-        applyTheme(theme);
+        applyTheme();
 
-        // Listener for system changes if auto
         if (theme === 'auto') {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            const handleChange = () => applyTheme('auto');
-            mediaQuery.addEventListener('change', handleChange);
-            return () => mediaQuery.removeEventListener('change', handleChange);
+            mediaQuery.addEventListener('change', applyTheme);
+            return () => mediaQuery.removeEventListener('change', applyTheme);
         }
-
     }, [theme]);
+
+    return resolvedTheme;
 };

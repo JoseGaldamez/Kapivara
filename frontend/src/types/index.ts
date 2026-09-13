@@ -53,6 +53,14 @@ export interface RequestResponse {
     time_ms: number;
 }
 
+export type RequestBodyType = 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
+export type RequestAuthType = 'none' | 'bearer' | 'basic' | 'apikey';
+
+export interface RequestAuthConfig {
+    auth_type: RequestAuthType;
+    auth_data?: string | Record<string, string>;
+}
+
 export interface RequestInfo {
     id: string;
     collection_id?: string | null;
@@ -62,7 +70,7 @@ export interface RequestInfo {
     url: string;
     headers?: string; // JSON string
     body?: string;
-    body_type?: 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
+    body_type?: RequestBodyType;
     auth?: string; // JSON string
     params?: string; // JSON string
     response?: RequestResponse | null;
@@ -90,13 +98,13 @@ export interface RequestParam {
 export interface RequestBody {
     id: string;
     request_id: string;
-    body_type: 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
+    body_type: RequestBodyType;
     raw_data?: string;
 }
 
 export interface RequestAuth {
     id: string;
     request_id: string;
-    auth_type: 'none' | 'bearer' | 'basic' | 'apikey';
+    auth_type: RequestAuthType;
     auth_data?: string; // JSON string
 }

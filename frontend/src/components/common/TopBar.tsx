@@ -12,8 +12,9 @@ import {
     Settings,
     X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WindowControls } from "./WindowControls";
+import { useDismissibleLayer } from "@/hooks/useDismissibleLayer";
 
 interface TopBarProps {
     searchTerm: string;
@@ -46,7 +47,10 @@ export const TopBar = ({
     const activeGlobalEnvironmentId = useEnvironmentStore((state) => state.activeGlobalEnvironmentId);
     const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
     const [isSavingEnvironment, setIsSavingEnvironment] = useState(false);
-    const headerRef = useRef<HTMLElement>(null);
+    const headerRef = useDismissibleLayer<HTMLElement>({
+        isOpen: openMenu !== null,
+        onDismiss: () => setOpenMenu(null),
+    });
 
     const activeProject = projects.find((project) => project.uid === activeProjectId) ?? null;
     const activeProjectEnvironment = projectEnvironments.find((environment) => environment.id === activeProjectEnvironmentId);
@@ -61,21 +65,6 @@ export const TopBar = ({
     useEffect(() => {
         if (activeProjectId) void environmentController.bootstrap(activeProjectId);
     }, [activeProjectId]);
-
-    useEffect(() => {
-        const closeMenus = (event: MouseEvent) => {
-            if (!headerRef.current?.contains(event.target as Node)) setOpenMenu(null);
-        };
-        const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setOpenMenu(null);
-        };
-        document.addEventListener("mousedown", closeMenus);
-        document.addEventListener("keydown", closeOnEscape);
-        return () => {
-            document.removeEventListener("mousedown", closeMenus);
-            document.removeEventListener("keydown", closeOnEscape);
-        };
-    }, []);
 
     const chooseProject = (projectId: string | null) => {
         selectProject(projectId);

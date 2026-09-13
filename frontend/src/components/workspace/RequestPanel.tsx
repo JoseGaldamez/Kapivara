@@ -1,5 +1,5 @@
-import { RequestInfo, RequestParam, RequestHeader, Project } from "@/types";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Collection, Environment, Project, RequestInfo, SavedResponse } from "@/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { requestController } from "@/controllers/request.controller";
 import { useRequestStore } from "@/stores/request.store";
 import { useProjectStore } from "@/stores/project.store";
@@ -9,9 +9,11 @@ import { JsonViewer } from "./JsonViewer";
 import { FormRequestSection } from "./FormRequestSection";
 import { SavedResponsesPanel } from "./SavedResponsesPanel";
 import { SaveResponseModal } from "../modals/SaveResponseModal";
-import { Edit2, AlertCircle, Info, Save } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { ResponseStatusBar } from "./ResponseStatusBar";
-import { getRequestDisplayName } from "@/utils/request-name.util";
+import { useRequestEditor } from "@/hooks/useRequestEditor";
+import { useVerticalPanelResize } from "@/hooks/useVerticalPanelResize";
+import { RequestPanelHeader } from "./RequestPanelHeader";
 
 // Tabs
 import {
@@ -29,13 +31,27 @@ interface RequestPanelProps {
     project?: Project;
 }
 
-const EMPTY_ENVIRONMENTS: any[] = [];
-const EMPTY_SAVED_RESPONSES: any[] = [];
-const EMPTY_COLLECTIONS: any[] = [];
+const EMPTY_ENVIRONMENTS: Environment[] = [];
+const EMPTY_SAVED_RESPONSES: SavedResponse[] = [];
+const EMPTY_COLLECTIONS: Collection[] = [];
 
 export const RequestPanel = ({ request, project }: RequestPanelProps) => {
-    const [method, setMethod] = useState(request.method || "GET");
-    const [url, setUrl] = useState(request.url || "");
+    const {
+        method,
+        url,
+        body,
+        bodyType,
+        queryParams,
+        headers,
+        auth,
+        updateMethod: handleMethodChange,
+        updateUrl: handleUrlChange,
+        updateBody: handleBodyChange,
+        updateBodyType: handleBodyTypeChange,
+        updateParams: handleUpdateParams,
+        updateHeaders: handleUpdateHeaders,
+        updateAuth: handleAuthChange,
+    } = useRequestEditor(request);
     const activeTab = useRequestStore((state) =>
         state.activeTabByRequest[request.id] || state.lastActiveTab || "Body"
     );
@@ -44,45 +60,17 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
     }, [request.id]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Title editing state
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [title, setTitle] = useState(request.name || "");
-    const titleInputRef = useRef<HTMLInputElement>(null);
-
-    // Resize state
-    const [body, setBody] = useState(request.body || "");
-    const [bodyType, setBodyType] = useState(request.body_type || "none");
-    const [queryParams, setQueryParams] = useState<RequestParam[]>(() => {
-        if (!request.params) return [];
-        try {
-            return typeof request.params === 'string' ? JSON.parse(request.params) : request.params;
-        } catch {
-            return [];
-        }
+    const {
+        containerRef: panelRef,
+        height: responseHeight,
+        isDragging,
+        startResizing: handleStartResizing,
+    } = useVerticalPanelResize<HTMLDivElement>({
+        initialHeight: 300,
+        minHeight: 60,
+        reservedHeight: 130,
+        fallbackMaxHeight: 700,
     });
-
-    const [headers, setHeaders] = useState<RequestHeader[]>(() => {
-        if (!request.headers) return [];
-        try {
-            return typeof request.headers === 'string' ? JSON.parse(request.headers) : request.headers;
-        } catch {
-            return [];
-        }
-    });
-
-    const [auth, setAuth] = useState<any>(() => {
-        if (!request.auth) return { auth_type: 'none' };
-        try {
-            return typeof request.auth === 'string' ? JSON.parse(request.auth) : request.auth;
-        } catch {
-            return { auth_type: 'none' };
-        }
-    });
-
-    const [responseHeight, setResponseHeight] = useState(300);
-    const [isDragging, setIsDragging] = useState(false);
-    const dragStartRef = useRef<{ startY: number; startHeight: number }>({ startY: 0, startHeight: 300 });
-    const panelRef = useRef<HTMLDivElement>(null);
     const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
     const [resolvedVariables, setResolvedVariables] = useState<Record<string, string>>({});
     const [responseViewTab, setResponseViewTab] = useState<'response' | 'preview' | 'saved'>('response');
@@ -103,6 +91,7 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
     const globalEnvironments = useEnvironmentStore((state) => state.globalEnvironments ?? EMPTY_ENVIRONMENTS);
     const activeProjectEnvironmentId = useEnvironmentStore((state) => state.activeProjectEnvironmentIdByProject[request.project_id] ?? null);
     const activeGlobalEnvironmentId = useEnvironmentStore((state) => state.activeGlobalEnvironmentId);
+    const variableKeys = useMemo(() => Object.keys(resolvedVariables), [resolvedVariables]);
 
 
     useEffect(() => {
@@ -116,113 +105,6 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
         };
         syncVariables();
     }, [request.project_id, activeProjectEnvironmentId, activeGlobalEnvironmentId, projectEnvironments, globalEnvironments]);
-
-    useEffect(() => {
-        setMethod(request.method || "GET");
-        setUrl(request.url || "");
-        setBody(request.body || "");
-        setBodyType(request.body_type || "none");
-        setTitle(request.name || "");
-
-        try {
-            const parsedParams = typeof request.params === 'string' ? JSON.parse(request.params) : (request.params || []);
-            setQueryParams(parsedParams);
-        } catch {
-            setQueryParams([]);
-        }
-
-        try {
-            const parsedHeaders = typeof request.headers === 'string' ? JSON.parse(request.headers) : (request.headers || []);
-            setHeaders(parsedHeaders);
-        } catch {
-            setHeaders([]);
-        }
-
-        if (!request.auth) {
-            setAuth({ auth_type: 'none' });
-        } else {
-            try {
-                setAuth(typeof request.auth === 'string' ? JSON.parse(request.auth) : request.auth);
-            } catch {
-                setAuth({ auth_type: 'none' });
-            }
-        }
-    }, [request.id]);
-
-    // Handle resizing without jumping
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isDragging) return;
-            const deltaY = dragStartRef.current.startY - e.clientY;
-            const maxAllowed = panelRef.current ? panelRef.current.clientHeight - 130 : 700;
-            const newHeight = Math.max(60, Math.min(maxAllowed, dragStartRef.current.startHeight + deltaY));
-            setResponseHeight(newHeight);
-        };
-
-        const handleMouseUp = () => {
-            setIsDragging(false);
-        };
-
-        if (isDragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            document.body.style.userSelect = 'none';
-            document.body.style.cursor = 'row-resize';
-        } else {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-            document.body.style.userSelect = '';
-            document.body.style.cursor = '';
-        }
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-            document.body.style.userSelect = '';
-            document.body.style.cursor = '';
-        };
-    }, [isDragging]);
-
-    const handleStartResizing = (e: React.MouseEvent) => {
-        e.preventDefault();
-        window.getSelection()?.removeAllRanges();
-        dragStartRef.current = {
-            startY: e.clientY,
-            startHeight: responseHeight
-        };
-        setIsDragging(true);
-    };
-
-    useEffect(() => {
-        if (isEditingTitle && titleInputRef.current) {
-            titleInputRef.current.focus();
-            titleInputRef.current.select();
-        }
-    }, [isEditingTitle]);
-
-    const displayName = getRequestDisplayName({
-        name: request.name,
-        method,
-        url
-    });
-
-    const handleTitleSave = async () => {
-        const trimmed = title.trim();
-        if (trimmed !== (request.name || "")) {
-            await requestController.updateRequest(request.id, request.project_id, { name: trimmed });
-            toast.success(trimmed ? "Request renamed" : "Request name reset to default");
-        }
-        setIsEditingTitle(false);
-    };
-
-    const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleTitleSave();
-        } else if (e.key === "Escape") {
-            setTitle(request.name || "");
-            setIsEditingTitle(false);
-        }
-    };
 
     const handleSend = async () => {
         if (!url) return;
@@ -259,109 +141,21 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
         }
     };
 
-    const handleMethodChange = (newMethod: string) => {
-        setMethod(newMethod);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            method: newMethod,
-            is_dirty: true
-        });
-    };
-
-    const handleUrlChange = (newUrl: string) => {
-        const qIndex = newUrl.indexOf('?');
-        if (qIndex === -1) {
-            setUrl(newUrl);
-        } else {
-            const baseUrl = newUrl.slice(0, qIndex);
-            const queryString = newUrl.slice(qIndex + 1);
-            const newParams: RequestParam[] = queryString
-                ? queryString.split('&').map(pair => {
-                    const [key, value] = pair.split('=');
-                    const existing = queryParams.find(p => p.key === key && p.value === (value || ''));
-                    return {
-                        id: existing?.id || crypto.randomUUID(),
-                        request_id: request.id,
-                        key: key || '',
-                        value: value || '',
-                        description: existing?.description || '',
-                        is_active: 1
-                    };
-                })
-                : [];
-            setUrl(baseUrl);
-            setQueryParams(newParams);
-        }
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            url: newUrl,
-            is_dirty: true
-        });
-    };
-
-    const handleBodyChange = (newBody: string) => {
-        setBody(newBody);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            body: newBody,
-            is_dirty: true
-        });
-    };
-
-    const handleBodyTypeChange = (newType: any) => {
-        setBodyType(newType);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            body_type: newType,
-            is_dirty: true
-        });
-    };
-
-    const handleUpdateParams = (newParams: RequestParam[]) => {
-        setQueryParams(newParams);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            params: JSON.stringify(newParams),
-            is_dirty: true
-        });
-    };
-
-    const handleUpdateHeaders = (newHeaders: RequestHeader[]) => {
-        setHeaders(newHeaders);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            headers: JSON.stringify(newHeaders),
-            is_dirty: true
-        });
-    };
-
-    const handleAuthChange = (newAuth: any) => {
-        setAuth(newAuth);
-        useRequestStore.getState().updateRequest({
-            id: request.id,
-            project_id: request.project_id,
-            auth: JSON.stringify(newAuth),
-            is_dirty: true
-        });
-    };
-
     const handleSave = useCallback(async () => {
-        await requestController.updateRequest(request.id, request.project_id, {
-            url,
-            method,
-            body,
-            body_type: bodyType,
-            params: JSON.stringify(queryParams),
-            headers: JSON.stringify(headers),
-            auth: JSON.stringify(auth)
-        });
-        toast.success("Request saved");
+        try {
+            await requestController.updateRequest(request.id, request.project_id, {
+                url,
+                method,
+                body,
+                body_type: bodyType,
+                params: JSON.stringify(queryParams),
+                headers: JSON.stringify(headers),
+                auth: JSON.stringify(auth)
+            });
+            toast.success("Request saved");
+        } catch {
+            toast.error("Request could not be saved");
+        }
     }, [request.id, request.project_id, url, method, body, bodyType, queryParams, headers, auth]);
 
     const handleSaveResponse = async (name: string) => {
@@ -400,7 +194,7 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
         const visited = new Set<string>();
         while (currentId && !visited.has(currentId)) {
             visited.add(currentId);
-            const col = collections.find((c: any) => c.id === currentId);
+            const col = collections.find((collection) => collection.id === currentId);
             if (!col) break;
             path.unshift(col.name);
             currentId = col.parent_id;
@@ -424,87 +218,14 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
     return (
         <div ref={panelRef} className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#ded7ce] bg-[#fffdf9] shadow-xs transition-colors dark:border-white/8 dark:bg-[#18191e]">
 
-            {/* Request Path Header */}
-            <div className="flex items-center justify-between border-b border-[#ded7ce]/60 dark:border-white/8 px-4 py-2.5 bg-[#fbf8f4]/80 dark:bg-[#17181d]/80 min-h-[40px]">
-                <div className="flex items-center gap-1.5 text-xs text-[#5f554e] dark:text-[#a89f91] min-w-0 flex-1">
-                    {/* Project Name */}
-                    <span className="font-medium text-[#7a695d] dark:text-[#918a84] shrink-0" title={`Project: ${projectName}`}>
-                        {projectName}
-                    </span>
-
-                    {/* Folders (if any) */}
-                    {folderPath.map((folderName, index) => (
-                        <span key={index} className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[#a89c92] dark:text-[#5f5b57]">/</span>
-                            <span className="font-medium text-[#5f554e] dark:text-[#a89f91] max-w-[150px] truncate" title={`Folder: ${folderName}`}>
-                                {folderName}
-                            </span>
-                        </span>
-                    ))}
-
-                    {/* Separator before Request Name */}
-                    <span className="text-[#a89c92] dark:text-[#5f5b57] shrink-0">/</span>
-
-                    {/* Editable Request Name */}
-                    {isEditingTitle ? (
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1 max-w-sm">
-                            <input
-                                ref={titleInputRef}
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                onBlur={handleTitleSave}
-                                onKeyDown={handleTitleKeyDown}
-                                placeholder={displayName}
-                                className="w-full text-xs font-semibold text-[#1a1714] dark:text-[#f4eadf] bg-white dark:bg-[#202126] border border-[#0066ff] rounded px-2 py-0.5 focus:outline-none shadow-2xs"
-                            />
-                        </div>
-                    ) : (
-                        <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                                setTitle(request.name || displayName);
-                                setIsEditingTitle(true);
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                    setTitle(request.name || displayName);
-                                    setIsEditingTitle(true);
-                                }
-                            }}
-                            className="group flex items-center gap-1.5 min-w-0 cursor-pointer rounded px-1.5 py-0.5 -mx-1.5 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
-                            title="Click to rename request"
-                        >
-                            <span className="font-semibold text-[#1a1714] dark:text-[#f4eadf] truncate">
-                                {displayName}
-                            </span>
-                            <Edit2 size={11} className="text-[#8a7e72] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                            {request.is_dirty && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" title="Draft / Unsaved changes" />
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Save Button */}
-                <button
-                    type="button"
-                    onClick={handleSave}
-                    title="Save Request (Ctrl+S)"
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border shadow-2xs active:scale-95 shrink-0 ${
-                        request.is_dirty
-                            ? "border-[#0066ff]/40 bg-[#0066ff]/10 text-[#0066ff] hover:bg-[#0066ff]/20 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-400"
-                            : "border-[#ded7ce] dark:border-white/10 bg-white dark:bg-[#20222a] hover:bg-[#f6f2ec] dark:hover:bg-[#262833] text-[#5f554e] dark:text-[#a89f91] hover:text-[#1a1714] dark:hover:text-[#f4eadf]"
-                    }`}
-                >
-                    <Save size={13} className={request.is_dirty ? "text-[#0066ff] dark:text-blue-400" : "text-[#5f554e] dark:text-[#a89f91]"} />
-                    <span>Save</span>
-                    {request.is_dirty && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                    )}
-                </button>
-            </div>
+            <RequestPanelHeader
+                request={request}
+                method={method}
+                url={url}
+                projectName={projectName}
+                folderPath={folderPath}
+                onSave={handleSave}
+            />
 
             <FormRequestSection
                 method={method}
@@ -513,7 +234,7 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                 handleSend={handleSend}
                 handleMethodChange={handleMethodChange}
                 handleUrlChange={handleUrlChange}
-                variableKeys={Object.keys(resolvedVariables)}
+                variableKeys={variableKeys}
                 variablePreview={resolvedVariables}
                 projectId={request.project_id}
                 projectEnvironments={projectEnvironments}
@@ -537,15 +258,15 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                     />
 
                     <div className="flex-1 p-4 overflow-y-auto">
-                        {activeTab === "Query Params" && <QueryParamsTab params={queryParams} onUpdate={handleUpdateParams} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
-                        {activeTab === "Authorization" && <AuthorizationTab auth={auth} onUpdate={handleAuthChange} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
-                        {activeTab === "Headers" && <HeadersTab headers={headers} onUpdate={handleUpdateHeaders} variableKeys={Object.keys(resolvedVariables)} variablePreview={resolvedVariables} />}
+                        {activeTab === "Query Params" && <QueryParamsTab params={queryParams} onUpdate={handleUpdateParams} variableKeys={variableKeys} variablePreview={resolvedVariables} />}
+                        {activeTab === "Authorization" && <AuthorizationTab auth={auth} onUpdate={handleAuthChange} variableKeys={variableKeys} variablePreview={resolvedVariables} />}
+                        {activeTab === "Headers" && <HeadersTab headers={headers} onUpdate={handleUpdateHeaders} variableKeys={variableKeys} variablePreview={resolvedVariables} />}
                         {activeTab === "Body" && <BodyTab
                             body={body}
                             setBody={handleBodyChange}
                             bodyType={bodyType}
                             setBodyType={handleBodyTypeChange}
-                            variableKeys={Object.keys(resolvedVariables)}
+                            variableKeys={variableKeys}
                             variablePreview={resolvedVariables}
                         />}
                     </div>
@@ -647,7 +368,7 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                                             <iframe
                                                 key={request.response.body?.slice(0, 40)}
                                                 srcDoc={request.response.body ?? ''}
-                                                sandbox="allow-same-origin allow-scripts"
+                                                sandbox=""
                                                 className="w-full h-full border-0 bg-white"
                                                 title="Response Preview"
                                             />

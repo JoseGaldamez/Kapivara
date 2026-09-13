@@ -55,7 +55,7 @@ export const FormDataType = ({
         }
     }, [initialValue]);
 
-    const updateItem = (id: string, field: keyof FormDataItem, val: any) => {
+    const updateItem = <Key extends keyof FormDataItem,>(id: string, field: Key, val: FormDataItem[Key]) => {
         const newItems = localItems.map(h => h.id === id ? { ...h, [field]: val } : h);
 
         const lastItem = newItems[newItems.length - 1];
@@ -178,7 +178,7 @@ export const FormDataType = ({
                                         <select
                                             className="w-full p-1 bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none appearance-none"
                                             value={item.type || 'text'}
-                                            onChange={(e) => updateItem(item.id, 'type', e.target.value)}
+                                            onChange={(e) => updateItem(item.id, 'type', e.target.value as FormDataItem['type'])}
                                         >
                                             <option value="text">Text</option>
                                             <option value="file">File</option>

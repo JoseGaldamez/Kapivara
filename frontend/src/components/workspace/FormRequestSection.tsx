@@ -2,11 +2,12 @@ import { METHODS_COLORS } from '@/utils/methods.constants';
 import { Send, ChevronDown, AlertCircle } from 'lucide-react';
 import { Select } from '@/components/common/Select';
 import { VarBadge } from '@/components/common/VarBadge';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Environment, EnvironmentVariable } from '@/types';
 import { environmentController } from '@/controllers/environment.controller';
 import { resolveTemplateString } from '@/utils/environment-resolver';
 import { toast } from 'react-toastify';
+import { useDismissibleLayer } from '@/hooks/useDismissibleLayer';
 
 interface FormRequestSectionProps {
     method: string;
@@ -69,7 +70,7 @@ export const FormRequestSection = ({
         }
     }, [url, variablePreview]);
 
-    const detectedVariables = Array.from(url.matchAll(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g));
+    const detectedVariables = useMemo(() => Array.from(url.matchAll(/{{\s*([A-Za-z0-9_.-]+)\s*}}/g)), [url]);
 
     const findEnvForVariable = useCallback((varName: string): { envId: string; currentValue: string } => {
         const activeProjectEnv = projectEnvironments.find(e => e.id === activeProjectEnvironmentId);
@@ -93,24 +94,25 @@ export const FormRequestSection = ({
 
     // Recalculate addVarState when active environment changes
     useEffect(() => {
-        if (!addVarState) return;
-        const { envId, currentValue } = findEnvForVariable(addVarState.name);
         setAddVarState(prev => {
             if (!prev) return null;
+            const { envId, currentValue } = findEnvForVariable(prev.name);
+            const selectedEnvId = prev.userEditedEnv ? prev.selectedEnvId : envId;
+            const value = prev.userEditedValue ? prev.value : currentValue;
+            if (selectedEnvId === prev.selectedEnvId && value === prev.value) return prev;
             return {
                 ...prev,
-                selectedEnvId: prev.userEditedEnv ? prev.selectedEnvId : envId,
-                value: prev.userEditedValue ? prev.value : currentValue,
+                selectedEnvId,
+                value,
             };
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeProjectEnvironmentId, activeGlobalEnvironmentId]);
+    }, [findEnvForVariable]);
 
-    const allEnvironmentOptions = [
+    const allEnvironmentOptions = useMemo(() => [
         { value: '', label: 'Select environment...' },
         ...projectEnvironments.map(e => ({ value: e.id, label: `Project: ${e.name}` })),
         ...globalEnvironments.map(e => ({ value: e.id, label: `Global: ${e.name}` })),
-    ];
+    ], [globalEnvironments, projectEnvironments]);
 
     const handleAddVariable = async () => {
         if (!addVarState || !addVarState.selectedEnvId || !projectId) {
@@ -193,17 +195,10 @@ export const FormRequestSection = ({
     };
 
     const [isMethodMenuOpen, setIsMethodMenuOpen] = useState(false);
-    const methodMenuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (methodMenuRef.current && !methodMenuRef.current.contains(e.target as Node)) {
-                setIsMethodMenuOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    const methodMenuRef = useDismissibleLayer<HTMLDivElement>({
+        isOpen: isMethodMenuOpen,
+        onDismiss: () => setIsMethodMenuOpen(false),
+    });
 
     const onSendClick = () => {
         if (!url) return;

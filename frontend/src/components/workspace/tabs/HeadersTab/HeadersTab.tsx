@@ -33,7 +33,7 @@ export const HeadersTab = ({ headers: initialHeaders, onUpdate, variableKeys = [
         }
     }, [initialHeaders]);
 
-    const updateHeader = (id: string, field: keyof RequestHeader, value: any) => {
+    const updateHeader = <Key extends keyof RequestHeader,>(id: string, field: Key, value: RequestHeader[Key]) => {
         const currentHeader = localHeaders.find((header) => header && header.id === id);
         const newHeaders = localHeaders
             .filter(h => h !== null)
@@ -42,7 +42,7 @@ export const HeadersTab = ({ headers: initialHeaders, onUpdate, variableKeys = [
 
                 const updatedHeader = { ...header, [field]: value };
                 if (field === 'key' && currentHeader && !currentHeader.value) {
-                    const suggestedValues = getCommonHeaderValues(value);
+                    const suggestedValues = getCommonHeaderValues(String(value));
                     if (suggestedValues.length > 0) {
                         updatedHeader.value = suggestedValues[0];
                     }

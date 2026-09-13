@@ -3,6 +3,7 @@ import { SettingCard } from "../components/SettingCard";
 import { SettingRow } from "../components/SettingRow";
 import { SettingToggle } from "../components/SettingToggle";
 import { Select } from "@/components/common/Select";
+import type { AppLanguage } from "@/types/settings";
 import { useSettingsStore } from "@/stores/settings.store";
 import { settingsController } from "@/controllers/settings.controller";
 import { toast } from "react-toastify";
@@ -124,7 +125,7 @@ export const GeneralTab = () => {
                     <Select
                         value={settings.language}
                         onChange={(val) => {
-                            settingsController.updateSetting("language", val as any);
+                            void settingsController.updateSetting("language", val as AppLanguage);
                             toast.info(`Language set to ${val === "es" ? "Español" : "English"}`);
                         }}
                         options={languageOptions}

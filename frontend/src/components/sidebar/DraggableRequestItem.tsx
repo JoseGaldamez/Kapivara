@@ -4,6 +4,7 @@ import { Edit2, GripVertical, MoreVertical, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { requestController } from "@/controllers/request.controller";
 import { getRequestDisplayName } from "@/utils/request-name.util";
+import { useDismissibleLayer } from "@/hooks/useDismissibleLayer";
 
 interface DraggableRequestItemProps {
     req: RequestInfo;
@@ -26,7 +27,10 @@ export const DraggableRequestItem = ({
     const [editName, setEditName] = useState(req.name || "");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const menuRef = useRef<HTMLDivElement>(null);
+    const menuRef = useDismissibleLayer<HTMLDivElement>({
+        isOpen: isMenuOpen,
+        onDismiss: () => setIsMenuOpen(false),
+    });
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Sync input name when request name changes
@@ -43,21 +47,6 @@ export const DraggableRequestItem = ({
             inputRef.current?.select();
         }
     }, [isEditing]);
-
-    // Close menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsMenuOpen(false);
-            }
-        };
-        if (isMenuOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [isMenuOpen]);
 
     const handleSaveRename = async () => {
         const trimmed = editName.trim();
@@ -160,7 +149,7 @@ export const DraggableRequestItem = ({
                     {req.is_dirty ? <div className="bg-amber-500 w-1.5 h-1.5 rounded-full shrink-0" title="Draft / Unsaved" /> : null}
                     
                     {/* Options Dropdown Menu (··· button visible on hover or when selected) */}
-                    <div className="relative">
+                    <div ref={menuRef} className="relative">
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -173,7 +162,6 @@ export const DraggableRequestItem = ({
                         </button>
                         {isMenuOpen && (
                             <div
-                                ref={menuRef}
                                 onClick={(e) => e.stopPropagation()}
                                 className="absolute right-0 mt-1 z-[60] w-32 bg-[#fffdf9] dark:bg-[#1c1d24] border border-[#ded7ce] dark:border-white/10 rounded-xl shadow-xl p-1 animate-in fade-in slide-in-from-top-1 duration-150"
                             >

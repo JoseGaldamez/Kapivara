@@ -32,19 +32,31 @@ class SettingsController {
 
             const loadedSettings: Partial<AppSettings> = {};
 
-            result.forEach(item => {
-                const key = item.key as keyof AppSettings;
-                let value: any = item.value;
-                // Parse types
-                if (key === 'editor_font_size' || key === 'request_timeout') {
-                    value = parseInt(value, 10);
-                } else if (value === 'true') {
-                    value = true;
-                } else if (value === 'false') {
-                    value = false;
+            result.forEach(({ key, value }) => {
+                switch (key) {
+                    case 'theme':
+                        if (value === 'auto' || value === 'light' || value === 'dark') loadedSettings.theme = value;
+                        break;
+                    case 'language':
+                        if (value === 'en' || value === 'es') loadedSettings.language = value;
+                        break;
+                    case 'editor_font_size': {
+                        const parsed = Number.parseInt(value, 10);
+                        if (Number.isFinite(parsed)) loadedSettings.editor_font_size = parsed;
+                        break;
+                    }
+                    case 'request_timeout': {
+                        const parsed = Number.parseInt(value, 10);
+                        if (Number.isFinite(parsed)) loadedSettings.request_timeout = parsed;
+                        break;
+                    }
+                    case 'word_wrap':
+                    case 'ssl_verification':
+                    case 'follow_redirects':
+                    case 'telemetry':
+                        loadedSettings[key] = value === 'true';
+                        break;
                 }
-
-                loadedSettings[key] = value;
             });
 
             useSettingsStore.getState().setSettings(loadedSettings);

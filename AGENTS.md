@@ -8,6 +8,8 @@ Este archivo registra el estado actual del rediseño para que otro agente pueda 
 
 Kapivara es un cliente REST de escritorio local-first construido con Wails v2, Go y SQLite. El frontend usa React 19, TypeScript, Vite 7, Tailwind CSS 4, Zustand y Lucide.
 
+La versión actual del producto es `v0.2.0`. Debe mantenerse sincronizada en `wails.json`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/src/utils/information.constant.ts` y `README.md`.
+
 La intención visual vigente es profesional, sobria y técnica, sin perder la identidad cálida de la capibara. La aplicación debe sentirse como una herramienta de trabajo, no como una página de marketing ni una interfaz de juguete. Consulta también `PRODUCT.md` para el contexto permanente del producto.
 
 ## Solicitudes del usuario ya implementadas
@@ -135,6 +137,21 @@ La intención visual vigente es profesional, sobria y técnica, sin perder la id
 29. Cierre inmediato del selector superior de ambientes:
     - Al seleccionar o desactivar un ambiente de proyecto o global, el desplegable se cierra inmediatamente.
     - La persistencia del cambio continúa de forma asíncrona mediante `environmentController.setActiveEnvironment`; no es necesario hacer clic fuera del menú.
+30. Auditoría y refactorización React orientada a mantenibilidad y rendimiento:
+    - `useTheme` ahora aplica y devuelve el tema efectivo con un único listener de `matchMedia`; se eliminó el listener duplicado que existía en `App.tsx`.
+    - Se creó `useDismissibleLayer` para centralizar clic fuera y tecla Escape en menús/popovers. Lo usan `TopBar`, `Select`, `SidebarHeader` y `DraggableRequestItem`, y los listeners solo existen mientras la capa está abierta.
+    - Se creó `useRequestEditor` para encapsular estado, parseo seguro, actualización y marcado dirty del editor de requests. `RequestPanel` dejó de duplicar esa lógica.
+    - Se creó `useVerticalPanelResize` para aislar el redimensionado vertical y la limpieza de listeners/estilos globales.
+    - La cabecera editable del request se extrajo a `RequestPanelHeader` y la vista de variables resueltas a `ResolvedVariablesView`.
+    - La navegación interna por proyecto se extrajo a `ProjectContent`. Workspace, Environments, History, Project Settings y Settings general se cargan con `React.lazy` + `Suspense`.
+    - El bundle inicial de producción bajó de aproximadamente 518 KB a 292 KB; Vite dejó de advertir sobre un chunk inicial mayor a 500 KB.
+    - Se corrigió una carrera en `environmentController.bootstrap`: las inicializaciones simultáneas de un mismo proyecto/global ahora comparten la misma promesa y esperan su finalización.
+    - Los fallos de guardado de requests ya no se silencian: el controlador vuelve a propagar el error y la interfaz muestra feedback de fallo.
+    - Se mejoró la semántica accesible de `Select` (`button`, `listbox`, `option`, `aria-expanded`, `aria-selected`).
+    - El preview HTML de respuestas conserva el `iframe` aislado pero ya no permite ejecutar scripts del contenido remoto (`sandbox=""`).
+    - Se retiró código sin consumidores: `ManageEnvironmentsModal`, `RequestConsole` y los componentes legacy `AppearanceSettings`, `NetworkSettings` y `SystemSettings`.
+    - Se retiraron estado muerto (`requestStore.requests`, `projectStore.isSettingsOpen`) y el barrel de modales sin consumidores; se mantienen imports directos para favorecer el análisis del bundle.
+    - Se añadieron scripts reproducibles `npm run typecheck` y `npm test`; `npm run build` ejecuta primero el typecheck.
 
 ## Arquitectura actual del frontend
 
@@ -189,6 +206,12 @@ El sidebar redimensionable dentro de `Workspace` sigue siendo el árbol secundar
 - `frontend/src/controllers/project.controller.ts`: selección y regreso a Home.
 - `frontend/src/pages/Settings/Settings.tsx`: nuevo modal de configuración general en 2 paneles.
 - `frontend/src/components/common/AppToastContainer.tsx`: sistema sobrio y compacto de notificaciones toast.
+- `frontend/src/components/layout/ProjectContent.tsx`: enrutamiento interno por sección y límites de carga diferida.
+- `frontend/src/hooks/useDismissibleLayer.ts`: cierre reutilizable de capas transitorias.
+- `frontend/src/hooks/useRequestEditor.ts`: estado y mutaciones del editor de requests.
+- `frontend/src/hooks/useVerticalPanelResize.ts`: redimensionado vertical con limpieza de efectos globales.
+- `frontend/src/components/workspace/RequestPanelHeader.tsx`: ruta, renombrado y guardado de la request.
+- `frontend/src/pages/Environments/ResolvedVariablesView.tsx`: contexto y tabla de variables resueltas.
 - `frontend/src/stores/request.store.ts`: persistencia de pestaña activa por petición (`activeTabByRequest`) y contexto global (`lastActiveTab`).
 - `frontend/src/services/request.service.ts`: persistencia y serialización de auth, query JSON en `getRequests`.
 - `frontend/src/controllers/request.controller.ts`: inyección automática de Content-Type y guardado completo en `executeRequest`.
@@ -223,15 +246,17 @@ Los últimos cambios pasaron:
 
 ```powershell
 cd frontend
-& .\node_modules\.bin\tsc.cmd -p .\tsconfig.json
-node --experimental-strip-types --test tests/curl-parser.test.ts
-& .\node_modules\.bin\vite.cmd build
+npm run typecheck
+npm test
+npm run build
 
 cd ..
 go test ./...
 ```
 
 `go test ./...` necesita acceso a la caché de compilación de Go fuera del workspace en este entorno.
+
+El launcher global de `npm` de la máquina puede fallar si apunta a un `npm-cli.js` inexistente. En ese caso usa los binarios locales equivalentes: `& .\node_modules\.bin\tsc.cmd -p .\tsconfig.json`, `node --experimental-strip-types --test tests/curl-parser.test.ts` y `& .\node_modules\.bin\vite.cmd build`.
 
 La interfaz también fue montada una vez mediante Vite Preview después de corregir el ciclo de Zustand. Las llamadas al backend Wails no funcionan en un navegador normal, lo cual es esperado; los controles de ventana deben probarse dentro de la aplicación Wails.
 

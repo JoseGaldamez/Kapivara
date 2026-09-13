@@ -11,12 +11,12 @@ import {
     ToggleLeft,
     ToggleRight,
     AlertCircle,
-    RefreshCw,
 } from "lucide-react";
 import { Environment, EnvironmentScope, EnvironmentVariable, Project } from "@/types";
 import { useEnvironmentStore } from "@/stores/environment.store";
 import { environmentController } from "@/controllers/environment.controller";
 import { toast } from "react-toastify";
+import { ResolvedVariablesView } from "./ResolvedVariablesView";
 
 interface EnvironmentsPageProps {
     project: Project;
@@ -234,7 +234,7 @@ export const EnvironmentsPage = ({
         }
     };
 
-    const updateVariableField = (id: string, field: keyof EnvironmentVariable, value: any) => {
+    const updateVariableField = <Key extends keyof EnvironmentVariable,>(id: string, field: Key, value: EnvironmentVariable[Key]) => {
         const next = variables.map((row) => (row.id === id ? { ...row, [field]: value } : row));
         const last = next[next.length - 1];
         if (last.key || last.value) {
@@ -615,124 +615,17 @@ export const EnvironmentsPage = ({
                     </div>
                 )}
 
-                {/* TAB 2: RESOLVED ACTIVE VARIABLES VIEW */}
-                {activeTab === "resolved" && (
-                    <div className="space-y-6">
-                        {/* Context Status Banner */}
-                        <div className="rounded-xl border border-[#ded7ce] bg-[#fffdf9] p-6 shadow-[0_6px_20px_rgba(62,47,37,0.04)] dark:border-white/8 dark:bg-[#18191e]">
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-base font-semibold tracking-[-0.02em] text-[#2c211c] dark:text-[#f8eee5]">
-                                        Active Runtime Context
-                                    </h2>
-                                    <p className="mt-1 text-xs text-[#7e695d] dark:text-[#9e9791]">
-                                        Variables currently evaluated and injected into requests for this workspace.
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => void refreshDashboard()}
-                                    disabled={isRefreshing}
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#d8d0c7] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#3d2a21] transition-colors hover:bg-[#f8f4ef] dark:border-white/10 dark:bg-[#202127] dark:text-[#f8eee5]"
-                                >
-                                    <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} /> Refresh
-                                </button>
-                            </div>
-
-                            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div className="rounded-lg border border-[#eee6df] bg-[#faf6f1] p-3.5 dark:border-white/6 dark:bg-[#1e2026]">
-                                    <div className="flex items-center gap-2 text-xs font-semibold text-[#8f796c] dark:text-[#8f8b86]">
-                                        <FolderKanban size={15} /> Active Project Environment
-                                    </div>
-                                    <div className="mt-2 text-sm font-bold text-[#2c211c] dark:text-[#f8eee5]">
-                                        {activeProjectEnv ? activeProjectEnv.name : "None (inactive)"}
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-[#7e695d] dark:text-[#9e9791]">
-                                        {projectEnvVars.length} active variables
-                                    </div>
-                                </div>
-
-                                <div className="rounded-lg border border-[#eee6df] bg-[#faf6f1] p-3.5 dark:border-white/6 dark:bg-[#1e2026]">
-                                    <div className="flex items-center gap-2 text-xs font-semibold text-[#8f796c] dark:text-[#8f8b86]">
-                                        <Globe size={15} /> Active Global Environment
-                                    </div>
-                                    <div className="mt-2 text-sm font-bold text-[#2c211c] dark:text-[#f8eee5]">
-                                        {activeGlobalEnv ? activeGlobalEnv.name : "None (inactive)"}
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-[#7e695d] dark:text-[#9e9791]">
-                                        {globalEnvVars.length} active variables
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Resolved Variables Table */}
-                        <div className="rounded-xl border border-[#ded7ce] bg-[#fffdf9] p-6 shadow-[0_6px_20px_rgba(62,47,37,0.04)] dark:border-white/8 dark:bg-[#18191e]">
-                            <h2 className="mb-4 text-sm font-semibold tracking-[-0.02em] text-[#2c211c] dark:text-[#f8eee5]">
-                                Resolved Variables List
-                            </h2>
-
-                            {Object.keys(resolvedVariables).length === 0 ? (
-                                <div className="py-8 text-center text-xs text-[#8f796c] dark:text-[#8f8b86]">
-                                    No variables are currently active. Activate an environment above to use variables like{" "}
-                                    <code className="rounded bg-[#eee6df] px-1.5 py-0.5 font-mono dark:bg-white/8">
-                                        {"{{my_var}}"}
-                                    </code>{" "}
-                                    in your requests.
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs">
-                                        <thead>
-                                            <tr className="border-b border-[#eee6df] text-[11px] font-bold uppercase tracking-wider text-[#8f796c] dark:border-white/7 dark:text-[#8f8b86]">
-                                                <th className="pb-2">Variable</th>
-                                                <th className="pb-2 pl-4">Effective Value</th>
-                                                <th className="pb-2 pl-4">Source Scope</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-[#f2ebe3] font-mono text-xs dark:divide-white/5">
-                                            {Object.entries(resolvedVariables).map(([key, value]) => {
-                                                const inProject = projectEnvVars.some((v) => v.key === key);
-                                                const inGlobal = globalEnvVars.some((v) => v.key === key);
-                                                const isOverridden = inProject && inGlobal;
-
-                                                return (
-                                                    <tr key={key} className="hover:bg-[#faf6f0] dark:hover:bg-white/2">
-                                                        <td className="py-2.5 font-bold text-[#245f92] dark:text-blue-400">
-                                                            {`{{${key}}}`}
-                                                        </td>
-                                                        <td className="py-2.5 pl-4 text-[#3d2a21] dark:text-[#e4dad3]">
-                                                            {value}
-                                                        </td>
-                                                        <td className="py-2.5 pl-4 font-sans">
-                                                            {isOverridden ? (
-                                                                <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:bg-amber-500/15 dark:text-amber-300">
-                                                                    Project (overrides Global)
-                                                                </span>
-                                                            ) : inProject ? (
-                                                                <span className="inline-flex items-center gap-1 rounded bg-[#e8eef4] px-2 py-0.5 text-[10px] font-semibold text-[#245f92] dark:bg-blue-500/15 dark:text-blue-400">
-                                                                    Project
-                                                                </span>
-                                                            ) : inGlobal ? (
-                                                                <span className="inline-flex items-center gap-1 rounded bg-[#e8efea] px-2 py-0.5 text-[10px] font-semibold text-[#367557] dark:bg-emerald-500/15 dark:text-emerald-400">
-                                                                    Global
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[#a09084] dark:text-[#77736f]">
-                                                                    Unknown
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {activeTab === "resolved" ? (
+                    <ResolvedVariablesView
+                        activeProjectEnvironment={activeProjectEnv}
+                        activeGlobalEnvironment={activeGlobalEnv}
+                        projectVariables={projectEnvVars}
+                        globalVariables={globalEnvVars}
+                        resolvedVariables={resolvedVariables}
+                        isRefreshing={isRefreshing}
+                        onRefresh={() => void refreshDashboard()}
+                    />
+                ) : null}
             </div>
 
             {/* Confirmation Modal for Delete Environment */}

@@ -6,6 +6,8 @@ class EnvironmentController {
     private service: EnvironmentService | null = null;
     private initializedProjects = new Set<string>();
     private isGlobalInitialized = false;
+    private projectBootstrapPromises = new Map<string, Promise<void>>();
+    private globalBootstrapPromise: Promise<void> | null = null;
 
     private async getService() {
         if (!this.service) {
@@ -31,40 +33,43 @@ class EnvironmentController {
     }
 
     public async bootstrap(projectId: string) {
-        const tasks: Promise<unknown>[] = [];
-
-        if (!this.initializedProjects.has(projectId)) {
-            const projectTask = (async () => {
+        let projectTask = this.projectBootstrapPromises.get(projectId);
+        if (!this.initializedProjects.has(projectId) && !projectTask) {
+            projectTask = (async () => {
                 const environments = await this.loadProjectEnvironments(projectId);
                 if (environments.length === 0) {
-                    await this.createEnvironment('project', 'Local', projectId, [
-                        {
-                            id: crypto.randomUUID(),
-                            key: 'baseUrl',
-                            value: '',
-                            enabled: 1
-                        }
-                    ]);
+                    await this.createEnvironment('project', 'Local', projectId, [{
+                        id: crypto.randomUUID(),
+                        key: 'baseUrl',
+                        value: '',
+                        enabled: 1
+                    }]);
                 } else {
                     const activeId = await this.loadActiveProjectEnvironment(projectId);
-                    if (!activeId && environments.length > 0) {
+                    if (!activeId) {
                         await this.setActiveEnvironment('project', environments[0].id, projectId);
                     }
                 }
-            })();
-            tasks.push(projectTask);
-            this.initializedProjects.add(projectId);
+                this.initializedProjects.add(projectId);
+            })().finally(() => this.projectBootstrapPromises.delete(projectId));
+            this.projectBootstrapPromises.set(projectId, projectTask);
         }
 
-        if (!this.isGlobalInitialized) {
-            tasks.push(this.loadGlobalEnvironments());
-            tasks.push(this.loadActiveGlobalEnvironment());
-            this.isGlobalInitialized = true;
+        if (!this.isGlobalInitialized && !this.globalBootstrapPromise) {
+            this.globalBootstrapPromise = Promise.all([
+                this.loadGlobalEnvironments(),
+                this.loadActiveGlobalEnvironment(),
+            ]).then(() => {
+                this.isGlobalInitialized = true;
+            }).finally(() => {
+                this.globalBootstrapPromise = null;
+            });
         }
 
-        if (tasks.length > 0) {
-            await Promise.all(tasks);
-        }
+        await Promise.all([
+            projectTask ?? Promise.resolve(),
+            this.globalBootstrapPromise ?? Promise.resolve(),
+        ]);
     }
 
     public async loadProjectEnvironments(projectId: string) {

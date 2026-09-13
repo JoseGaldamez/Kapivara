@@ -7,29 +7,9 @@ import { useTheme } from "./hooks/useTheme";
 
 import { AppToastContainer } from "./components/common/AppToastContainer";
 import "react-toastify/dist/ReactToastify.css";
-import { useState } from "react";
-import { useSettingsStore } from "./stores/settings.store";
 
 function App() {
-  useTheme();
-  const theme = useSettingsStore(state => state.settings.theme);
-  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    if (theme === 'auto') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      setEffectiveTheme(mediaQuery.matches ? 'dark' : 'light');
-
-      const handleChange = (e: MediaQueryListEvent) => {
-        setEffectiveTheme(e.matches ? 'dark' : 'light');
-      };
-
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    } else {
-      setEffectiveTheme(theme as "light" | "dark");
-    }
-  }, [theme]);
+  const effectiveTheme = useTheme();
 
   useEffect(() => {
     const initApp = async () => {

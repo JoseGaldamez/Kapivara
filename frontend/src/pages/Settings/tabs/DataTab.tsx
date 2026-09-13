@@ -4,6 +4,7 @@ import { SettingRow } from "../components/SettingRow";
 import { useConsoleStore } from "@/stores/console.store";
 import { settingsController } from "@/controllers/settings.controller";
 import { toast } from "react-toastify";
+import type { AppSettings } from "@/types/settings";
 
 export const DataTab = () => {
     const consoleEntries = useConsoleStore((state) => state.entries);
@@ -15,9 +16,9 @@ export const DataTab = () => {
     };
 
     const handleResetSettings = () => {
-        const defaults = {
-            theme: "auto" as const,
-            language: "es" as const,
+        const defaults: AppSettings = {
+            theme: "auto",
+            language: "es",
             editor_font_size: 14,
             word_wrap: true,
             ssl_verification: true,
@@ -26,8 +27,8 @@ export const DataTab = () => {
             telemetry: false,
         };
 
-        Object.entries(defaults).forEach(([key, val]) => {
-            settingsController.updateSetting(key as any, val);
+        (Object.keys(defaults) as Array<keyof AppSettings>).forEach((key) => {
+            void settingsController.updateSetting(key, defaults[key]);
         });
 
         toast.success("Application settings restored to defaults");

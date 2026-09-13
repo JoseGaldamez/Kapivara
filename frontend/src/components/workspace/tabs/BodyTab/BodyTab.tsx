@@ -3,19 +3,18 @@ import { JsonType } from "./RequestBodyTypes/JsonType/JsonType";
 import { FormDataType } from "./RequestBodyTypes/FormDataType";
 import { UrlEncodedType } from "./RequestBodyTypes/UrlEncodedType";
 import { RawType } from "./RequestBodyTypes/RawType";
+import type { RequestBodyType } from "@/types";
 
 interface BodyTabProps {
     body: string;
     setBody: (body: string) => void;
     bodyType: string;
-    setBodyType: (type: any) => void;
+    setBodyType: (type: RequestBodyType) => void;
     variableKeys?: string[];
     variablePreview?: Record<string, string>;
 }
 
-type BodyType = 'none' | 'json' | 'form-data' | 'x-www-form-urlencoded' | 'raw';
-
-const BODY_TYPES: { id: BodyType; label: string }[] = [
+const BODY_TYPES: { id: RequestBodyType; label: string }[] = [
     { id: 'none', label: 'None' },
     { id: 'json', label: 'JSON' },
     { id: 'form-data', label: 'Form Data' },
@@ -25,7 +24,7 @@ const BODY_TYPES: { id: BodyType; label: string }[] = [
 
 export const BodyTab = ({ body, setBody, bodyType, setBodyType, variableKeys = [], variablePreview = {} }: BodyTabProps) => {
 
-    const handleTypeChange = (newType: BodyType) => {
+    const handleTypeChange = (newType: RequestBodyType) => {
         // When switching to JSON, try to pretty-print the current body
         if (newType === 'json' && body) {
             try {

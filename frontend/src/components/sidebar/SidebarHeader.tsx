@@ -1,5 +1,6 @@
 import { Plus, Search, FilePlus, FolderPlus, Braces } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useDismissibleLayer } from "@/hooks/useDismissibleLayer";
 
 interface SidebarHeaderProps {
     searchTerm: string;
@@ -18,7 +19,10 @@ export const SidebarHeader = ({
 }: SidebarHeaderProps) => {
     const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const plusMenuRef = useRef<HTMLDivElement>(null);
+    const plusMenuRef = useDismissibleLayer<HTMLDivElement>({
+        isOpen: isPlusMenuOpen,
+        onDismiss: () => setIsPlusMenuOpen(false),
+    });
 
     // Keyboard shortcut to focus search: Ctrl+F / Cmd+F
     useEffect(() => {
@@ -31,17 +35,6 @@ export const SidebarHeader = ({
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, []);
-
-    // Close menu on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
-                setIsPlusMenuOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);

@@ -1,11 +1,13 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.1.10",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "copy-assets-components": "node copy-components.js"
   },

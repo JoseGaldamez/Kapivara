@@ -1,10 +1,11 @@
 import { useState, useRef, ReactNode } from "react";
 import { Select } from "@/components/common/Select";
+import type { RequestAuthConfig, RequestAuthType } from "@/types";
 import { VarBadge } from "@/components/common/VarBadge";
 
 interface AuthorizationTabProps {
-    auth: any;
-    onUpdate: (newAuth: any) => void;
+    auth: RequestAuthConfig;
+    onUpdate: (newAuth: RequestAuthConfig) => void;
     variableKeys?: string[];
     variablePreview?: Record<string, string>;
 }
@@ -213,10 +214,11 @@ const EnvironmentTextarea = ({
 
 export const AuthorizationTab = ({ auth, onUpdate, variableKeys = [], variablePreview = {} }: AuthorizationTabProps) => {
     const currentType = auth?.auth_type || 'none';
-    let authData: any = {};
+    let authData: Record<string, string> = {};
     if (auth && auth.auth_data) {
         try {
-            authData = typeof auth.auth_data === 'string' ? JSON.parse(auth.auth_data) : auth.auth_data;
+            const parsed: unknown = typeof auth.auth_data === 'string' ? JSON.parse(auth.auth_data) : auth.auth_data;
+            authData = parsed && typeof parsed === 'object' ? parsed as Record<string, string> : {};
         } catch (e) {
             authData = {};
         }
@@ -224,7 +226,7 @@ export const AuthorizationTab = ({ auth, onUpdate, variableKeys = [], variablePr
 
     const handleTypeChange = (newType: string) => {
         onUpdate({
-            auth_type: newType,
+            auth_type: newType as RequestAuthType,
             auth_data: (newType === 'apikey') ? { add_to: 'header' } : {}
         });
     };
