@@ -8,12 +8,12 @@
   "frontend:dev:serverUrl": "auto",
   "author": {
     "name": "José Galdámez",
-    "email": "josegaldamez1991@gmail.com"
+    "email": "[EMAIL_ADDRESS]"
   },
   "info": {
     "companyName": "José Galdámez",
     "productName": "Kapivara",
-    "productVersion": "0.2.0",
+    "productVersion": "0.3.0",
     "copyright": "Copyright © 2026 José Galdámez",
     "comments": "A REST API client tool"
   }
