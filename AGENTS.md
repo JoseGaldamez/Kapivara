@@ -152,6 +152,11 @@ La intención visual vigente es profesional, sobria y técnica, sin perder la id
     - Se retiró código sin consumidores: `ManageEnvironmentsModal`, `RequestConsole` y los componentes legacy `AppearanceSettings`, `NetworkSettings` y `SystemSettings`.
     - Se retiraron estado muerto (`requestStore.requests`, `projectStore.isSettingsOpen`) y el barrel de modales sin consumidores; se mantienen imports directos para favorecer el análisis del bundle.
     - Se añadieron scripts reproducibles `npm run typecheck` y `npm test`; `npm run build` ejecuta primero el typecheck.
+31. Automatización de empaquetado para Linux (.deb y .rpm) en GitHub Actions:
+    - Se actualizó `.github/workflows/build.yml` para enfocar la compilación y release de GitHub exclusivamente en Linux (`ubuntu-22.04`).
+    - Se eliminaron del flujo de GitHub los jobs de Windows y macOS, reservando esas plataformas para que el desarrollador las genere y firme manualmente en local con sus certificados.
+    - Se integró `nfpm` (de Goreleaser) de forma efímera en el runner de GitHub para empaquetar el binario Linux compilado por Wails junto con su lanzador de escritorio (`kapivara.desktop`), iconos del sistema e información de dependencias (`libgtk-3-0`, `libwebkit2gtk`).
+    - El release de GitHub ahora sube única y exclusivamente los paquetes de instalación `.deb` y `.rpm` (eliminando binarios sueltos, código fuente y archivos intermedios).
 
 ## Arquitectura actual del frontend
 
