@@ -1,8 +1,16 @@
 name: Build & Release Kapivara
 
 on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
   release:
-    types: [published]
+    types: [published, created]
   workflow_dispatch:
 
 permissions:
@@ -18,17 +26,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get version from release or wails.json
+      - name: Get version from release, tag, or wails.json
         id: get_version
         run: |
           TAG="${{ github.event.release.tag_name }}"
-          if [ -n "$TAG" ]; then
-            VERSION="${TAG#v}"
-          else
+          if [ -z "$TAG" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION=$(echo "$TAG" | sed 's/^v//')
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then
             VERSION=$(jq -r '.info.productVersion' wails.json)
-            if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
-              VERSION="${GITHUB_REF_NAME#v}"
-            fi
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
@@ -135,7 +142,7 @@ EOF
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kapivara-linux-packages
+          name: kapivara-linux
           path: |
             dist/*.deb
             dist/*.rpm
@@ -144,21 +151,24 @@ EOF
   release:
     needs: [get-version, build-linux]
     runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download Linux packages
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: kapivara-linux-packages
-          path: dist/
+          path: artifacts/
+          merge-multiple: true
 
-      - name: Attach Linux packages to GitHub Release
+      - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          name: Kapivara ${{ github.event.release.tag_name || github.ref_name }}
+          draft: false
+          prerelease: false
           files: |
-            dist/*.deb
-            dist/*.rpm
-          fail_on_unmatched_files: true
+            artifacts/**/*
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
