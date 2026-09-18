@@ -157,6 +157,16 @@ La intención visual vigente es profesional, sobria y técnica, sin perder la id
     - Se eliminaron del flujo de GitHub los jobs de Windows y macOS, reservando esas plataformas para que el desarrollador las genere y firme manualmente en local con sus certificados.
     - Se integró `nfpm` (de Goreleaser) de forma efímera en el runner de GitHub para empaquetar el binario Linux compilado por Wails junto con su lanzador de escritorio (`kapivara.desktop`), iconos del sistema e información de dependencias (`libgtk-3-0`, `libwebkit2gtk`).
     - El release de GitHub ahora sube única y exclusivamente los paquetes de instalación `.deb` y `.rpm` (eliminando binarios sueltos, código fuente y archivos intermedios).
+32. Reorganización profesional del backend en Go (Standard Go Project Layout con `internal/`):
+    - Se trasladaron todos los paquetes privados fuera de la raíz hacia el directorio `internal/`:
+      - `internal/config/`: configuración de compilación dev/prod (`config_dev.go` con `//go:build dev`, `config_prod.go` con `//go:build !dev`), dimensiones mínimas de ventana y `DatabasePath()` con soporte para `KAPIVARA_DB_PATH` y `os.UserConfigDir()`.
+      - `internal/database/`: modularizado en `db.go` (conexión, Initialize, Close, Select, Execute), `migrate.go` (migraciones secuenciales con `embed.FS`), `args.go` (normalizador `cleanArgs`), `settings.go` (repositorio clave-valor), `window.go` (persistencia de geometría de ventana), y `internal/database/migrations/`.
+      - `internal/httpclient/`: modularizado en `client.go` (`MakeRequest`, tipos `HttpResponse` y `FormDataItem`), `mime.go` (`detectMimeType`), y `multipart.go` (`buildMultipartBody`).
+    - En la raíz (`package main`):
+      - `main.go` mantiene el punto de entrada, assets embebidos y opciones Wails consumiendo `internal/config`.
+      - `app.go` funciona como adaptador delgado (thin bridge) entre el runtime Wails y los servicios en `internal/`.
+      - Se eliminó el método boilerplate no utilizado `Greet`.
+    - Los bindings generados por Wails (`frontend/wailsjs/go/main/App`) permanecen 100% compatibles sin romper rutas de import en el frontend TypeScript.
 
 ## Arquitectura actual del frontend
 
@@ -222,8 +232,8 @@ El sidebar redimensionable dentro de `Workspace` sigue siendo el árbol secundar
 - `frontend/src/controllers/request.controller.ts`: inyección automática de Content-Type y guardado completo en `executeRequest`.
 - `frontend/src/utils/curl-parser.ts`: parser local de comandos cURL; separa URL, params, headers, auth y body sin ejecutar el comando ni enviar secretos fuera del dispositivo.
 - `frontend/src/components/modals/ImportCurlModal.tsx`: diálogo de importación accesible desde el menú `+` de Collections.
-- `database/database.go`: normalizador `cleanArgs` para parámetros de consulta SQLite (Go maps/slices -> JSON).
-- `httpclient/client.go`: inyección fallback de Content-Type por defecto (`application/json`, `application/x-www-form-urlencoded`).
+- `internal/database/args.go`: normalizador `cleanArgs` para parámetros de consulta SQLite (Go maps/slices -> JSON).
+- `internal/httpclient/client.go`: inyección fallback de Content-Type por defecto (`application/json`, `application/x-www-form-urlencoded`).
 - `frontend/src/App.css`: sistema visual y estilos de la ventana frameless.
 - `main.go`: configuración Wails, incluyendo `Frameless: true`.
 

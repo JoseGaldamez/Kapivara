@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 
-	"kapivara/database"
-	"kapivara/httpclient"
+	"kapivara/internal/config"
+	"kapivara/internal/database"
+	"kapivara/internal/httpclient"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -29,17 +27,8 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	// Obtener la ruta de la base de datos (con soporte de override mediante KAPIVARA_DB_PATH)
-	dbPath := os.Getenv("KAPIVARA_DB_PATH")
-	if dbPath == "" {
-		configDir, err := os.UserConfigDir()
-		if err != nil {
-			configDir = "."
-		}
-		dbPath = filepath.Join(configDir, DBFolder, DBName)
-	}
-
-	fmt.Printf("[%s] Initializing database at: %s\n", AppTitle, dbPath)
+	dbPath := config.DatabasePath()
+	fmt.Printf("[%s] Initializing database at: %s\n", config.AppTitle, dbPath)
 	db, err := database.Initialize(dbPath)
 	if err != nil {
 		fmt.Printf("Error initializing database: %v\n", err)
@@ -50,27 +39,17 @@ func (a *App) startup(ctx context.Context) {
 
 // domReady is called when the frontend DOM is ready.
 func (a *App) domReady(ctx context.Context) {
-	runtime.WindowSetTitle(ctx, AppTitle)
+	runtime.WindowSetTitle(ctx, config.AppTitle)
 
 	if a.db != nil {
-		// Restablecer posición y tamaño de la ventana desde la DB
-		widthStr, _ := a.db.GetSetting("window_width")
-		heightStr, _ := a.db.GetSetting("window_height")
-		xStr, _ := a.db.GetSetting("window_x")
-		yStr, _ := a.db.GetSetting("window_y")
-
-		if widthStr != "" && heightStr != "" {
-			w, _ := strconv.Atoi(widthStr)
-			h, _ := strconv.Atoi(heightStr)
-			if w >= 960 && h >= 640 { // Validar tamaños mínimos para no romper la UI
-				runtime.WindowSetSize(ctx, w, h)
+		bounds, err := a.db.GetWindowBounds(config.MinWidth, config.MinHeight)
+		if err == nil {
+			if bounds.HasSize {
+				runtime.WindowSetSize(ctx, bounds.Width, bounds.Height)
 			}
-		}
-
-		if xStr != "" && yStr != "" {
-			x, _ := strconv.Atoi(xStr)
-			y, _ := strconv.Atoi(yStr)
-			runtime.WindowSetPosition(ctx, x, y)
+			if bounds.HasPos {
+				runtime.WindowSetPosition(ctx, bounds.X, bounds.Y)
+			}
 		}
 	}
 
@@ -86,15 +65,9 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 	}()
 
 	if a.db != nil {
-		// Obtener tamaño y posición actual de la ventana (el window aún es válido aquí)
 		w, h := runtime.WindowGetSize(ctx)
 		x, y := runtime.WindowGetPosition(ctx)
-
-		// Guardar en la DB
-		_ = a.db.SaveSetting("window_width", strconv.Itoa(w))
-		_ = a.db.SaveSetting("window_height", strconv.Itoa(h))
-		_ = a.db.SaveSetting("window_x", strconv.Itoa(x))
-		_ = a.db.SaveSetting("window_y", strconv.Itoa(y))
+		_ = a.db.SaveWindowBounds(w, h, x, y)
 	}
 	return false
 }
@@ -111,11 +84,6 @@ func (a *App) shutdown(ctx context.Context) {
 		fmt.Println("Closing database connection...")
 		a.db.Close()
 	}
-}
-
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
 // DBSelect ejecuta una consulta de selección en la base de datos.

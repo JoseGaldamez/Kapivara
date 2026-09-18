@@ -84,4 +84,21 @@ func TestInitializeAndMigrations(t *testing.T) {
 	if authResults[0]["auth_data"] != `{"token":"secret-jwt-token"}` {
 		t.Errorf("expected auth_data '{\"token\":\"secret-jwt-token\"}', got '%v'", authResults[0]["auth_data"])
 	}
+
+	// Probar persistencia de WindowBounds
+	err = db.SaveWindowBounds(1280, 800, 100, 200)
+	if err != nil {
+		t.Fatalf("failed to save window bounds: %v", err)
+	}
+
+	bounds, err := db.GetWindowBounds(960, 640)
+	if err != nil {
+		t.Fatalf("failed to get window bounds: %v", err)
+	}
+	if !bounds.HasSize || bounds.Width != 1280 || bounds.Height != 800 {
+		t.Errorf("unexpected window size: %+v", bounds)
+	}
+	if !bounds.HasPos || bounds.X != 100 || bounds.Y != 200 {
+		t.Errorf("unexpected window position: %+v", bounds)
+	}
 }

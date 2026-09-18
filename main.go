@@ -3,6 +3,8 @@ package main
 import (
 	"embed"
 
+	"kapivara/internal/config"
+
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -18,11 +20,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     AppTitle,
-		Width:     1280,
-		Height:    720,
-		MinWidth:  960,
-		MinHeight: 640,
+		Title:     config.AppTitle,
+		Width:     config.DefaultWidth,
+		Height:    config.DefaultHeight,
+		MinWidth:  config.MinWidth,
+		MinHeight: config.MinHeight,
 		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

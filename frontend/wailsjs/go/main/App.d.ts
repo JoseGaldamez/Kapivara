@@ -6,8 +6,6 @@ export function DBExecute(arg1:string,arg2:Array<any>):Promise<void>;
 
 export function DBSelect(arg1:string,arg2:Array<any>):Promise<Array<Record<string, any>>>;
 
-export function Greet(arg1:string):Promise<string>;
-
 export function MakeHttpRequest(arg1:string,arg2:string,arg3:Record<string, string>,arg4:string,arg5:string):Promise<httpclient.HttpResponse>;
 
 export function OpenFileDialog():Promise<string>;
