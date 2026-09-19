@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { AppSettings } from '../types/settings';
+import { readCachedTheme } from '../utils/theme-preference';
 
 interface SettingsState {
     settings: AppSettings;
@@ -10,7 +11,7 @@ interface SettingsState {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-    theme: 'auto',
+    theme: readCachedTheme(),
     language: 'es',
     editor_font_size: 14,
     word_wrap: true,

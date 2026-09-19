@@ -2,6 +2,7 @@ import SettingsService from "@/services/settings.service";
 import { useSettingsStore } from "@/stores/settings.store";
 import { AppSettings } from "@/types/settings";
 import { toast } from "react-toastify";
+import { cacheTheme } from "@/utils/theme-preference";
 
 class SettingsController {
     private service: SettingsService | null = null;
@@ -59,6 +60,7 @@ class SettingsController {
                 }
             });
 
+            cacheTheme(loadedSettings.theme ?? 'auto');
             useSettingsStore.getState().setSettings(loadedSettings);
         } catch (error) {
             console.error('Failed to load settings:', error);
@@ -75,6 +77,7 @@ class SettingsController {
 
             await service.updateSetting(key, stringValue);
 
+            if (key === 'theme') cacheTheme(value as AppSettings['theme']);
             useSettingsStore.getState().updateSetting(key, value);
         } catch (error) {
             console.error(`Failed to update setting ${key}:`, error);

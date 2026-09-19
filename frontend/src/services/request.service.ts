@@ -1,5 +1,5 @@
 import DBService from "./db.service";
-import { RequestInfo, Collection, SavedResponse } from "@/types";
+import { RequestInfo, RequestResponse, Collection, SavedResponse } from "@/types";
 
 class RequestService {
     private static instancePromise: Promise<RequestService> | null = null;
@@ -23,38 +23,49 @@ class RequestService {
 
     public async getRequests(projectId: string): Promise<RequestInfo[]> {
         const db = await DBService.getInstance();
-        const query = `
-            SELECT 
-                r.*, 
-                rb.body_type, 
-                rb.raw_data as body,
-                (SELECT json_group_array(json_object('id', rp.id, 'key', rp.key, 'value', rp.value, 'description', rp.description, 'is_active', rp.is_active)) 
-                 FROM request_params rp 
-                 WHERE rp.request_id = r.id) as params,
-                 (SELECT json_group_array(json_object('id', rh.id, 'key', rh.key, 'value', rh.value, 'is_active', rh.is_active)) 
-                  FROM request_headers rh 
-                  WHERE rh.request_id = r.id) as headers,
-                 (SELECT json_object('id', ra.id, 'auth_type', ra.auth_type, 'auth_data', 
-                    CASE WHEN ra.auth_data IS NOT NULL AND json_valid(ra.auth_data) THEN json(ra.auth_data) ELSE ra.auth_data END)
-                  FROM request_auth ra
-                  WHERE ra.request_id = r.id) as auth
-            FROM requests r 
-            LEFT JOIN request_body rb ON r.id = rb.request_id 
-            WHERE r.project_id = $1
-        `;
-        const results = await db.select<any[]>(query, [projectId]);
+        return db.select<RequestInfo[]>(
+            `SELECT id, collection_id, project_id, name, method, url, created_at
+             FROM requests WHERE project_id = $1`,
+            [projectId]
+        );
+    }
 
-        // Parse the SQLite TEXT into JSON Object
-        return results.map(row => {
-            if (row.response && typeof row.response === 'string') {
-                try {
-                    row.response = JSON.parse(row.response);
-                } catch (e) {
-                    row.response = null;
-                }
-            }
-            return row as RequestInfo;
-        });
+    public async getRequestDetails(requestId: string): Promise<Partial<RequestInfo> | null> {
+        const db = await DBService.getInstance();
+        const rows = await db.select<Partial<RequestInfo>[]>(`
+            SELECT rb.body_type, rb.raw_data AS body,
+                (SELECT json_group_array(json_object('id', rp.id, 'key', rp.key, 'value', rp.value, 'description', rp.description, 'is_active', rp.is_active))
+                 FROM request_params rp WHERE rp.request_id = r.id) AS params,
+                (SELECT json_group_array(json_object('id', rh.id, 'key', rh.key, 'value', rh.value, 'is_active', rh.is_active))
+                 FROM request_headers rh WHERE rh.request_id = r.id) AS headers,
+                (SELECT json_object('id', ra.id, 'auth_type', ra.auth_type, 'auth_data',
+                    CASE WHEN ra.auth_data IS NOT NULL AND json_valid(ra.auth_data) THEN json(ra.auth_data) ELSE ra.auth_data END)
+                 FROM request_auth ra WHERE ra.request_id = r.id) AS auth
+            FROM requests r
+            LEFT JOIN request_body rb ON r.id = rb.request_id
+            WHERE r.id = $1 LIMIT 1
+        `, [requestId]);
+        return rows[0] ?? null;
+    }
+
+    public async getStoredResponse(requestId: string): Promise<RequestResponse | null> {
+        const db = await DBService.getInstance();
+        const rows = await db.select<{ response: string | null }[]>(
+            'SELECT response FROM requests WHERE id = $1 LIMIT 1',
+            [requestId]
+        );
+        if (!rows[0]?.response) return null;
+        try {
+            return JSON.parse(rows[0].response) as RequestResponse;
+        } catch {
+            return null;
+        }
+    }
+
+    public async getRequestCount(projectId: string): Promise<number> {
+        const db = await DBService.getInstance();
+        const rows = await db.select<{ count: number }[]>('SELECT COUNT(*) AS count FROM requests WHERE project_id = $1', [projectId]);
+        return rows[0]?.count ?? 0;
     }
 
     public async getCollections(projectId: string): Promise<Collection[]> {
@@ -128,8 +139,8 @@ class RequestService {
     public async saveResponse(saved: SavedResponse): Promise<void> {
         if (!this.dbService) this.dbService = await DBService.getInstance();
         await this.dbService.execute(
-            `INSERT INTO saved_responses (id, request_id, name, status, status_text, headers, body, time_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [saved.id, saved.request_id, saved.name, saved.status, saved.status_text, saved.headers, saved.body ?? null, saved.time_ms]
+            `INSERT INTO saved_responses (id, request_id, name, status, status_text, headers, body, time_ms, body_encoding, content_type, size_bytes, response_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            [saved.id, saved.request_id, saved.name, saved.status, saved.status_text, saved.headers, saved.body ?? null, saved.time_ms, saved.body_encoding ?? 'text', saved.content_type ?? '', saved.size_bytes ?? null, saved.response_url ?? '']
         );
     }
 

@@ -3,8 +3,17 @@
 @custom-variant dark (&.dark);
 
 html, body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #f4eadf;
+    color: #2e1b14;
     margin: 0;
     font-family: "IBM Plex Sans", "Avenir Next", system-ui, sans-serif;
+}
+
+html.dark, html.dark body, html.dark #root {
+    background-color: #101115;
+    color: #f8eee5;
+}
+
+#root {
+    min-height: 100vh;
 }

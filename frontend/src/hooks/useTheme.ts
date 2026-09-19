@@ -4,9 +4,16 @@ import { AppTheme } from '@/types/settings';
 
 export type ResolvedTheme = 'light' | 'dark';
 
-const getResolvedTheme = (theme: AppTheme): ResolvedTheme => {
+export const getResolvedTheme = (theme: AppTheme): ResolvedTheme => {
     if (theme !== 'auto') return theme;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+export const applyThemeToDocument = (theme: AppTheme): ResolvedTheme => {
+    const resolved = getResolvedTheme(theme);
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
+    document.documentElement.classList.toggle('light', resolved === 'light');
+    return resolved;
 };
 
 export const useTheme = () => {
@@ -14,15 +21,9 @@ export const useTheme = () => {
     const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => getResolvedTheme(theme));
 
     useEffect(() => {
-        const root = window.document.documentElement;
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const applyTheme = () => {
-            const nextTheme = theme === 'auto'
-                ? (mediaQuery.matches ? 'dark' : 'light')
-                : theme;
-            root.classList.remove('light', 'dark');
-            root.classList.add(nextTheme);
-            setResolvedTheme(nextTheme);
+            setResolvedTheme(applyThemeToDocument(theme));
         };
 
         applyTheme();

@@ -1,8 +1,10 @@
 package httpclient
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,11 +13,15 @@ import (
 
 // HttpResponse representa la respuesta HTTP formateada para el frontend
 type HttpResponse struct {
-	Status     int               `json:"status"`
-	StatusText string            `json:"status_text"`
-	Headers    map[string]string `json:"headers"`
-	Body       string            `json:"body"`
-	TimeMs     int64             `json:"time_ms"`
+	Status       int               `json:"status"`
+	StatusText   string            `json:"status_text"`
+	Headers      map[string]string `json:"headers"`
+	Body         string            `json:"body"`
+	BodyEncoding string            `json:"body_encoding"`
+	ContentType  string            `json:"content_type"`
+	ResponseURL  string            `json:"response_url"`
+	SizeBytes    int64             `json:"size_bytes"`
+	TimeMs       int64             `json:"time_ms"`
 }
 
 // FormDataItem representa un elemento individual del cuerpo multipart/form-data
@@ -85,12 +91,24 @@ func MakeRequest(method string, urlStr string, headers map[string]string, body s
 	}
 	defer resp.Body.Close()
 
-	timeMs := time.Since(start).Milliseconds()
-
 	// Leer cuerpo de respuesta
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	timeMs := time.Since(start).Milliseconds()
+
+	responseType, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+	if responseType == "" || responseType == "application/octet-stream" {
+		responseType = http.DetectContentType(bodyBytes)
+	}
+	responseType = strings.ToLower(responseType)
+	isMedia := strings.HasPrefix(responseType, "image/") || strings.HasPrefix(responseType, "video/") || responseType == "application/pdf"
+	responseBody := string(bodyBytes)
+	encoding := "text"
+	if isMedia {
+		responseBody = base64.StdEncoding.EncodeToString(bodyBytes)
+		encoding = "base64"
 	}
 
 	// Procesar cabeceras de respuesta
@@ -103,10 +121,14 @@ func MakeRequest(method string, urlStr string, headers map[string]string, body s
 	statusText := strings.TrimSpace(strings.TrimPrefix(resp.Status, strconv.Itoa(resp.StatusCode)))
 
 	return &HttpResponse{
-		Status:     resp.StatusCode,
-		StatusText: statusText,
-		Headers:    respHeaders,
-		Body:       string(bodyBytes),
-		TimeMs:     timeMs,
+		Status:       resp.StatusCode,
+		StatusText:   statusText,
+		Headers:      respHeaders,
+		Body:         responseBody,
+		BodyEncoding: encoding,
+		ContentType:  responseType,
+		ResponseURL:  resp.Request.URL.String(),
+		SizeBytes:    int64(len(bodyBytes)),
+		TimeMs:       timeMs,
 	}, nil
 }

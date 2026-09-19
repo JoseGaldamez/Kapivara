@@ -39,7 +39,7 @@ This project is built using a modern technology stack to ensure performance and 
 
 ## 📦 Version and Status
 
-**Current Version:** `0.2.0` (Wails Migration Beta)
+**Current Version:** `0.3.1` (Wails Migration Beta)
 
 > [!NOTE]  
 > Kapivara is currently in active development. Features may change as we iterate towards the v1.0 release.

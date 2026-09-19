@@ -1,6 +1,6 @@
 # Kapivara — contexto de trabajo para agentes
 
-Última actualización: 2026-09-13.
+Última actualización: 2026-09-19.
 
 Este archivo registra el estado actual del rediseño para que otro agente pueda continuar sin reconstruir el contexto desde cero. Las modificaciones descritas todavía pueden estar sin commit; no las reviertas ni limpies el working tree.
 
@@ -8,7 +8,7 @@ Este archivo registra el estado actual del rediseño para que otro agente pueda 
 
 Kapivara es un cliente REST de escritorio local-first construido con Wails v2, Go y SQLite. El frontend usa React 19, TypeScript, Vite 7, Tailwind CSS 4, Zustand y Lucide.
 
-La versión actual del producto es `v0.2.0`. Debe mantenerse sincronizada en `wails.json`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/src/utils/information.constant.ts` y `README.md`.
+La versión actual del producto es `v0.3.1`. Debe mantenerse sincronizada en `wails.json`, `frontend/package.json`, `frontend/package-lock.json`, `frontend/src/utils/information.constant.ts` y `README.md`.
 
 La intención visual vigente es profesional, sobria y técnica, sin perder la identidad cálida de la capibara. La aplicación debe sentirse como una herramienta de trabajo, no como una página de marketing ni una interfaz de juguete. Consulta también `PRODUCT.md` para el contexto permanente del producto.
 

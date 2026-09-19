@@ -6,10 +6,14 @@ import { useSidebarDnd } from "@/hooks/useSidebarDnd";
 import { METHODS_COLORS } from "@/utils/methods.constants";
 import { getRequestDisplayName } from "@/utils/request-name.util";
 import { GripVertical } from "lucide-react";
+import type { LoadStatus } from "@/stores/request.store";
 
 interface SidebarListProps {
     requests: RequestInfo[];
     collections: Collection[];
+    hasStoredItems: boolean;
+    loadStatus: LoadStatus;
+    onRetry: () => void;
     projectId: string;
     activeRequestId: string | null;
     onSelectRequest: (req: RequestInfo) => void;
@@ -38,6 +42,9 @@ const RequestDragPreview = ({ req }: { req: RequestInfo }) => {
 export const SidebarList = ({
     requests,
     collections,
+    hasStoredItems,
+    loadStatus,
+    onRetry,
     projectId,
     onSelectRequest,
     onDeleteRequest,
@@ -71,9 +78,23 @@ export const SidebarList = ({
             onDragEnd={handleDragEnd}
         >
             <div className="p-2 transition-colors">
-                {requests.length === 0 && collections.length === 0 ? (
+                {loadStatus === 'loading' ? (
+                    <div role="status" aria-label="Loading requests" className="space-y-2 px-1 pt-2 motion-safe:animate-pulse">
+                        {Array.from({ length: 6 }, (_, index) => (
+                            <div key={index} className="flex h-8 items-center gap-2 rounded-lg bg-[#f6f2ec] px-2.5 dark:bg-white/[0.04]">
+                                <span className="h-3 w-8 rounded bg-[#e5ded6] dark:bg-white/10" />
+                                <span className={`h-3 rounded bg-[#e5ded6] dark:bg-white/10 ${index % 2 ? 'w-24' : 'w-36'}`} />
+                            </div>
+                        ))}
+                    </div>
+                ) : loadStatus === 'error' ? (
+                    <div role="alert" className="mt-6 px-3 text-center text-xs text-[#8a7e72] dark:text-[#a89f91]">
+                        <p>Could not load requests.</p>
+                        <button type="button" onClick={onRetry} className="mt-2 font-semibold text-[#0066ff] hover:underline">Retry</button>
+                    </div>
+                ) : requests.length === 0 && collections.length === 0 ? (
                     <div className="text-xs text-[#8a7e72] dark:text-[#a89f91] text-center mt-6 py-4">
-                        No requests or folders yet. <br /> Create one to get started!
+                        {hasStoredItems ? 'No requests match your search.' : <>No requests or folders yet. <br /> Create one to get started!</>}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-0.5 min-h-full pb-32">

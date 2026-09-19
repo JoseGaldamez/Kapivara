@@ -25,7 +25,41 @@ class RequestController {
             return requests;
         } catch (error) {
             console.error('Failed to get requests:', error);
-            return [];
+            throw error;
+        }
+    }
+
+    public async loadRequestDetails(projectId: string, requestId: string): Promise<void> {
+        const store = useRequestStore.getState();
+        if (store.requestDetailStatus[requestId] === 'loading' || store.requestDetailStatus[requestId] === 'loaded') return;
+        store.setRequestDetailStatus(requestId, 'loading');
+        try {
+            const service = await this.getService();
+            const details = await service.getRequestDetails(requestId);
+            if (!details) throw new Error('Request not found');
+            if (!useRequestStore.getState().requestsByProject[projectId]?.some((request) => request.id === requestId)) return;
+            useRequestStore.getState().updateRequest({ id: requestId, project_id: projectId, ...details });
+            useRequestStore.getState().setRequestDetailStatus(requestId, 'loaded');
+        } catch (error) {
+            console.error('Failed to load request details:', error);
+            useRequestStore.getState().setRequestDetailStatus(requestId, 'error');
+        }
+    }
+
+    public async loadStoredResponse(projectId: string, requestId: string): Promise<void> {
+        const store = useRequestStore.getState();
+        if (store.requestResponseStatus[requestId] === 'loading' || store.requestResponseStatus[requestId] === 'loaded') return;
+        store.setRequestResponseStatus(requestId, 'loading');
+        try {
+            const service = await this.getService();
+            const response = await service.getStoredResponse(requestId);
+            const current = useRequestStore.getState();
+            if (current.requestResponseStatus[requestId] !== 'loading') return;
+            if (!current.requestsByProject[projectId]?.some((request) => request.id === requestId)) return;
+            current.updateRequest({ id: requestId, project_id: projectId, response });
+        } catch (error) {
+            console.error('Failed to load stored response:', error);
+            useRequestStore.getState().setRequestResponseStatus(requestId, 'error');
         }
     }
 
@@ -141,7 +175,7 @@ class RequestController {
             return collections;
         } catch (error) {
             console.error('Failed to get collections:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -311,6 +345,10 @@ class RequestController {
                 status_text: rawResponse.status_text,
                 headers: rawResponse.headers || {},
                 body: rawResponse.body,
+                body_encoding: rawResponse.body_encoding as 'text' | 'base64',
+                content_type: rawResponse.content_type,
+                response_url: rawResponse.response_url,
+                size_bytes: rawResponse.size_bytes,
                 time_ms: rawResponse.time_ms
             };
 
@@ -344,7 +382,7 @@ class RequestController {
                 status: response.status,
                 statusText: response.status_text,
                 time_ms: response.time_ms,
-                responseBody: response.body,
+                responseBody: response.body_encoding === 'base64' ? '' : response.body,
                 responseHeaders: response.headers,
                 isHtml: contentType.includes('text/html'),
             });
@@ -431,7 +469,7 @@ class RequestController {
             return responses;
         } catch (error) {
             console.error('Failed to get saved responses:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -446,6 +484,10 @@ class RequestController {
                 status_text: response.status_text,
                 headers: JSON.stringify(response.headers),
                 body: response.body,
+                body_encoding: response.body_encoding,
+                content_type: response.content_type,
+                response_url: response.response_url,
+                size_bytes: response.size_bytes,
                 time_ms: response.time_ms,
             };
             await service.saveResponse(saved);

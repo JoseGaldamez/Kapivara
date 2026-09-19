@@ -1,7 +1,31 @@
-import { SavedResponse } from "@/types";
-import { Trash2, ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { RequestResponse, SavedResponse } from "@/types";
+import { Trash2, ChevronDown, ChevronRight, Maximize2 } from "lucide-react";
+import { useCallback, useState } from "react";
 import { JsonViewer } from "./JsonViewer";
+import { isMediaResponse, MediaResponseViewer } from "./MediaResponseViewer";
+import { ExpandedResponseModal } from "./ExpandedResponseModal";
+import { isHtmlResponse } from "@/utils/html-preview";
+
+const asRequestResponse = (saved: SavedResponse): RequestResponse => {
+    let headers: Record<string, string> = {};
+    try {
+        const parsed = JSON.parse(saved.headers || '{}');
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) headers = parsed;
+    } catch {
+        // Older saved responses may contain malformed header data.
+    }
+    return {
+        status: saved.status,
+        status_text: saved.status_text,
+        headers,
+        body: saved.body ?? '',
+        body_encoding: saved.body_encoding,
+        content_type: saved.content_type,
+        response_url: saved.response_url,
+        size_bytes: saved.size_bytes,
+        time_ms: saved.time_ms,
+    };
+};
 
 interface SavedResponsesPanelProps {
     responses: SavedResponse[];
@@ -10,6 +34,10 @@ interface SavedResponsesPanelProps {
 
 export const SavedResponsesPanel = ({ responses, onDelete }: SavedResponsesPanelProps) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [modalResponseId, setModalResponseId] = useState<string | null>(null);
+    const closeModal = useCallback(() => setModalResponseId(null), []);
+    const modalResponse = responses.find((response) => response.id === modalResponseId);
+    const expandedSavedResponse = modalResponse ? asRequestResponse(modalResponse) : null;
 
     if (responses.length === 0) {
         return (
@@ -36,6 +64,15 @@ export const SavedResponsesPanel = ({ responses, onDelete }: SavedResponsesPanel
                         <span className="text-xs text-gray-700 dark:text-gray-200 flex-1 truncate">{r.name}</span>
                         <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{r.time_ms}ms</span>
                         <button
+                            type="button"
+                            onClick={(event) => { event.stopPropagation(); setModalResponseId(r.id); }}
+                            aria-label={`Expand ${r.name}`}
+                            title="Expand response"
+                            className="text-gray-400 hover:text-[#0066ff] dark:hover:text-blue-400 cursor-pointer shrink-0"
+                        >
+                            <Maximize2 size={13} />
+                        </button>
+                        <button
                             onClick={(e) => { e.stopPropagation(); onDelete(r.id); }}
                             className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer shrink-0"
                         >
@@ -44,11 +81,21 @@ export const SavedResponsesPanel = ({ responses, onDelete }: SavedResponsesPanel
                     </div>
                     {expandedId === r.id && (
                         <div className="p-3 bg-white dark:bg-gray-900 max-h-64 overflow-y-auto">
-                            <JsonViewer data={r.body ?? ''} />
+                            {isMediaResponse({ ...r, body: r.body ?? '' }) ? (
+                                modalResponseId !== r.id && <div className="h-60"><MediaResponseViewer response={{ ...r, body: r.body ?? '' }} /></div>
+                            ) : <JsonViewer data={r.body ?? ''} />}
                         </div>
                     )}
                 </div>
             ))}
+            {modalResponse && expandedSavedResponse && (
+                <ExpandedResponseModal
+                    response={expandedSavedResponse}
+                    requestName={modalResponse.name}
+                    initialView={isHtmlResponse(expandedSavedResponse) ? 'preview' : 'response'}
+                    onClose={closeModal}
+                />
+            )}
         </div>
     );
 };

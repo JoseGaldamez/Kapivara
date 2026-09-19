@@ -66,15 +66,15 @@ export const ProjectSettingsPage = ({
                 const reqService = await RequestService.getInstance();
                 const envService = await EnvironmentService.getInstance();
 
-                const [requests, collections, environments] = await Promise.all([
-                    reqService.getRequests(project.uid),
+                const [requestsCount, collections, environments] = await Promise.all([
+                    reqService.getRequestCount(project.uid),
                     reqService.getCollections(project.uid),
                     envService.getProjectEnvironments(project.uid),
                 ]);
 
                 if (isMounted) {
                     setStats({
-                        requestsCount: requests.length,
+                        requestsCount,
                         collectionsCount: collections.length,
                         environmentsCount: environments.length,
                         loading: false,

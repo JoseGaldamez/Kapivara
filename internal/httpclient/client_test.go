@@ -1,6 +1,8 @@
 package httpclient
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"mime"
@@ -12,6 +14,40 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestMakeRequest_MediaBodiesRemainBinary(t *testing.T) {
+	tests := []struct {
+		name        string
+		contentType string
+		wantType    string
+		body        []byte
+	}{
+		{"image", "image/png", "image/png", []byte{'\x89', 'P', 'N', 'G', '\r', '\n', '\x1a', '\n', 0, 255}},
+		{"pdf", "application/pdf", "application/pdf", []byte("%PDF-1.7\n\x00\xff")},
+		{"video", "video/mp4; charset=binary", "video/mp4", []byte{0, 0, 0, 12, 'f', 't', 'y', 'p', 255, 0, 1, 2}},
+		{"sniffed image", "application/octet-stream", "image/png", []byte{'\x89', 'P', 'N', 'G', '\r', '\n', '\x1a', '\n', 0, 255}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", tt.contentType)
+				_, _ = w.Write(tt.body)
+			}))
+			defer server.Close()
+			response, err := MakeRequest("GET", server.URL, nil, "", "none")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if response.BodyEncoding != "base64" || response.ContentType != tt.wantType || response.SizeBytes != int64(len(tt.body)) {
+				t.Fatalf("unexpected metadata: %+v", response)
+			}
+			decoded, err := base64.StdEncoding.DecodeString(response.Body)
+			if err != nil || !bytes.Equal(decoded, tt.body) {
+				t.Fatalf("body was not preserved: %v", err)
+			}
+		})
+	}
+}
 
 func TestMakeRequest_Get(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

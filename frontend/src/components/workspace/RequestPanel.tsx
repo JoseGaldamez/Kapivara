@@ -1,14 +1,18 @@
 import { Collection, Environment, Project, RequestInfo, SavedResponse } from "@/types";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { requestController } from "@/controllers/request.controller";
 import { useRequestStore } from "@/stores/request.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useEnvironmentStore } from "@/stores/environment.store";
 import { environmentController } from "@/controllers/environment.controller";
 import { JsonViewer } from "./JsonViewer";
+import { isMediaResponse, MediaResponseViewer } from "./MediaResponseViewer";
 import { FormRequestSection } from "./FormRequestSection";
 import { SavedResponsesPanel } from "./SavedResponsesPanel";
 import { SaveResponseModal } from "../modals/SaveResponseModal";
+import { ExpandedResponseModal } from "./ExpandedResponseModal";
+import { SafeHtmlPreview } from "./SafeHtmlPreview";
+import { isHtmlResponse } from "@/utils/html-preview";
 import { AlertCircle, Info } from "lucide-react";
 import { ResponseStatusBar } from "./ResponseStatusBar";
 import { useRequestEditor } from "@/hooks/useRequestEditor";
@@ -75,17 +79,43 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
     const [resolvedVariables, setResolvedVariables] = useState<Record<string, string>>({});
     const [responseViewTab, setResponseViewTab] = useState<'response' | 'preview' | 'saved'>('response');
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [isResponseExpanded, setIsResponseExpanded] = useState(false);
+    const closeExpandedResponse = useCallback(() => setIsResponseExpanded(false), []);
+    const [savedLoadStatus, setSavedLoadStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+    const savedLoadInFlight = useRef(false);
 
-    const savedResponses = useRequestStore((state) => state.savedResponsesByRequest[request.id] ?? EMPTY_SAVED_RESPONSES);
+    const cachedSavedResponses = useRequestStore((state) => state.savedResponsesByRequest[request.id]);
+    const savedResponses = cachedSavedResponses ?? EMPTY_SAVED_RESPONSES;
+    const responseLoadStatus = useRequestStore((state) => state.requestResponseStatus[request.id]);
+    const hasMediaResponse = request.response ? isMediaResponse(request.response) : false;
+    const hasHtmlResponse = request.response ? isHtmlResponse(request.response) : false;
+    const visibleResponseTab = hasMediaResponse && responseViewTab === 'preview' ? 'response' : responseViewTab;
 
     // Reset view tab whenever a new response arrives
     useEffect(() => {
-        setResponseViewTab('response');
-    }, [request.response?.status, request.response?.body]);
+        setResponseViewTab(hasHtmlResponse ? 'preview' : 'response');
+        setIsResponseExpanded(false);
+    }, [request.id, request.response?.status, request.response?.body, hasHtmlResponse]);
+
+    const loadSavedResponses = useCallback(async () => {
+        if (savedLoadInFlight.current) return;
+        savedLoadInFlight.current = true;
+        setSavedLoadStatus('loading');
+        try {
+            await requestController.getSavedResponses(request.id);
+            setSavedLoadStatus('loaded');
+        } catch {
+            setSavedLoadStatus('error');
+        } finally {
+            savedLoadInFlight.current = false;
+        }
+    }, [request.id]);
 
     useEffect(() => {
-        requestController.getSavedResponses(request.id);
-    }, [request.id]);
+        if (responseViewTab === 'saved' && cachedSavedResponses === undefined && savedLoadStatus === 'idle') {
+            void loadSavedResponses();
+        }
+    }, [responseViewTab, cachedSavedResponses, savedLoadStatus, loadSavedResponses]);
 
     const projectEnvironments = useEnvironmentStore((state) => state.projectEnvironmentsByProject[request.project_id] ?? EMPTY_ENVIRONMENTS);
     const globalEnvironments = useEnvironmentStore((state) => state.globalEnvironments ?? EMPTY_ENVIRONMENTS);
@@ -293,6 +323,7 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                     isCollapsed={isResponseCollapsed}
                     onToggleCollapse={() => setIsResponseCollapsed((prev) => !prev)}
                     onSaveResponse={request.response ? () => setIsSaveModalOpen(true) : undefined}
+                    onExpandResponse={request.response ? () => setIsResponseExpanded(true) : undefined}
                 />
 
                 {!isResponseCollapsed ? <div className="flex-1 flex flex-col min-h-0 relative">
@@ -339,8 +370,8 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                             <>
                                 {/* Segmented capsule response tabs */}
                                 <div className="flex items-center p-0.5 bg-black/[0.04] dark:bg-white/[0.05] rounded-xl my-2 mx-4 gap-0.5 self-start border border-[#ded7ce]/60 dark:border-white/5">
-                                    {(['response', 'preview', 'saved'] as const).map((tab) => {
-                                        const isActive = responseViewTab === tab;
+                                    {(['response', ...(!hasMediaResponse ? ['preview' as const] : []), 'saved'] as const).map((tab) => {
+                                        const isActive = visibleResponseTab === tab;
                                         return (
                                             <button
                                                 key={tab}
@@ -359,31 +390,47 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
 
                                 {/* Content */}
                                 <div className="flex-1 min-h-0 px-4 pb-4 flex flex-col">
-                                    {responseViewTab === 'response' ? (
-                                        <div className="h-full rounded-xl border border-[#ded7ce] dark:border-white/8 bg-[#f6f2ec] dark:bg-[#121316] overflow-auto shadow-2xs">
-                                            <JsonViewer data={request.response.body} />
-                                        </div>
-                                    ) : responseViewTab === 'preview' ? (
+                                    {visibleResponseTab === 'response' ? (
+                                        hasMediaResponse ? (
+                                            !isResponseExpanded && <MediaResponseViewer response={request.response} />
+                                        ) : (
+                                            <div className="h-full rounded-xl border border-[#ded7ce] dark:border-white/8 bg-[#f6f2ec] dark:bg-[#121316] overflow-auto shadow-2xs">
+                                                <JsonViewer data={request.response.body} />
+                                            </div>
+                                        )
+                                    ) : visibleResponseTab === 'preview' ? (
                                         <div className="h-full rounded-xl border border-[#ded7ce] dark:border-white/8 overflow-hidden bg-white shadow-2xs">
-                                            <iframe
-                                                key={request.response.body?.slice(0, 40)}
-                                                srcDoc={request.response.body ?? ''}
-                                                sandbox=""
-                                                className="w-full h-full border-0 bg-white"
-                                                title="Response Preview"
-                                            />
+                                            <SafeHtmlPreview response={request.response} title="Response Preview" />
                                         </div>
                                     ) : (
                                         <div className="h-full rounded-xl border border-[#ded7ce] dark:border-white/8 bg-[#fffdf9] dark:bg-[#18191e] overflow-auto shadow-2xs">
-                                            <SavedResponsesPanel
-                                                responses={savedResponses}
-                                                onDelete={handleDeleteSavedResponse}
-                                            />
+                                            {cachedSavedResponses === undefined && savedLoadStatus === 'error' ? (
+                                                <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-[#8a7e72] dark:text-[#a89f91]">
+                                                    <p>Could not load saved responses.</p>
+                                                    <button type="button" onClick={() => void loadSavedResponses()} className="font-semibold text-[#0066ff] hover:underline">Retry</button>
+                                                </div>
+                                            ) : cachedSavedResponses === undefined ? (
+                                                <div role="status" aria-label="Loading saved responses" className="space-y-2 p-4 motion-safe:animate-pulse">
+                                                    {Array.from({ length: 3 }, (_, index) => <div key={index} className="h-9 rounded-lg bg-[#f6f2ec] dark:bg-white/[0.05]" />)}
+                                                </div>
+                                            ) : (
+                                                <SavedResponsesPanel responses={savedResponses} onDelete={handleDeleteSavedResponse} />
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             </>
                         )
+                    ) : responseLoadStatus === 'error' ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-[#8a7e72] dark:text-[#a89f91]">
+                            <p>Could not load the saved response.</p>
+                            <button type="button" onClick={() => void requestController.loadStoredResponse(request.project_id, request.id)} className="font-semibold text-[#0066ff] hover:underline">Retry</button>
+                        </div>
+                    ) : responseLoadStatus !== 'loaded' ? (
+                        <div role="status" aria-label="Loading saved response" className="h-full px-4 py-5 motion-safe:animate-pulse">
+                            <div className="mb-4 h-6 w-44 rounded bg-[#e5ded6] dark:bg-white/10" />
+                            <div className="h-[calc(100%-2.5rem)] rounded-xl bg-[#f6f2ec] dark:bg-white/[0.04]" />
+                        </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
                             <p>Send a request to see the response</p>
@@ -398,6 +445,15 @@ export const RequestPanel = ({ request, project }: RequestPanelProps) => {
                 onClose={() => setIsSaveModalOpen(false)}
                 onConfirm={handleSaveResponse}
             />
+
+            {isResponseExpanded && request.response && (
+                <ExpandedResponseModal
+                    response={request.response}
+                    requestName={request.name}
+                    initialView={visibleResponseTab === 'preview' ? 'preview' : 'response'}
+                    onClose={closeExpandedResponse}
+                />
+            )}
 
 
         </div>

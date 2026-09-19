@@ -185,4 +185,4 @@
 - [ ] Eliminar `rust-old/` una vez verificada la migración completa
 - [ ] Eliminar archivos de template de Wails no utilizados
 - [ ] Revisar y limpiar dependencias no usadas (`go mod tidy`, `npm prune`)
-- [ ] Actualizar versión del proyecto a `0.2.0` (o la que corresponda)
+- [x] Actualizar versión del proyecto a `0.3.1`

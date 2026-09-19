@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 
 interface JsonViewerProps {
     data: string;
+    expanded?: boolean;
 }
 
 const highlightValue = (val: string): React.ReactNode => {
@@ -58,7 +59,7 @@ const highlightJsonLine = (line: string): React.ReactNode => {
     );
 };
 
-export const JsonViewer = ({ data }: JsonViewerProps) => {
+export const JsonViewer = ({ data, expanded = false }: JsonViewerProps) => {
     const formattedLines = useMemo(() => {
         if (!data) return [""];
         try {
@@ -72,13 +73,13 @@ export const JsonViewer = ({ data }: JsonViewerProps) => {
     }, [data]);
 
     return (
-        <div className="py-3 font-mono text-xs select-text min-h-full">
+        <div className={`py-3 font-mono select-text min-h-full ${expanded ? 'text-sm' : 'text-xs'}`}>
             {formattedLines.map((line, index) => (
                 <div
                     key={index}
-                    className="flex hover:bg-black/[0.025] dark:hover:bg-white/[0.035] py-0.5 leading-5 transition-colors"
+                    className={`flex hover:bg-black/[0.025] dark:hover:bg-white/[0.035] py-0.5 transition-colors ${expanded ? 'leading-6' : 'leading-5'}`}
                 >
-                    <span className="w-11 shrink-0 text-right pr-3.5 text-[#8a7e72]/60 dark:text-[#6e665d] select-none text-[11px] tabular-nums border-r border-[#ded7ce]/40 dark:border-white/5 bg-black/[0.015] dark:bg-white/[0.015]">
+                    <span className={`${expanded ? 'w-14 text-xs' : 'w-11 text-[11px]'} shrink-0 text-right pr-3.5 text-[#8a7e72]/60 dark:text-[#6e665d] select-none tabular-nums border-r border-[#ded7ce]/40 dark:border-white/5 bg-black/[0.015] dark:bg-white/[0.015]`}>
                         {index + 1}
                     </span>
                     <span className="flex-1 whitespace-pre break-all pl-3.5 pr-4 text-[#2c211c] dark:text-[#f3eeea]">

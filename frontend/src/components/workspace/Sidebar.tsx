@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useRequestStore } from "@/stores/request.store";
 import { RequestInfo } from "@/types";
@@ -32,16 +32,26 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
 
     const requests = useRequestStore((state) => state.requestsByProject[projectId] ?? EMPTY_REQUESTS);
     const collections = useRequestStore((state) => state.collectionsByProject?.[projectId] ?? EMPTY_COLLECTIONS);
+    const loadStatus = useRequestStore((state) => state.projectLoadStatus[projectId]);
 
-
-    useEffect(() => {
-        if (requests.length === 0 && collections.length === 0 && projectId) {
-            Promise.all([
+    const loadProject = useCallback(async () => {
+        if (!projectId || useRequestStore.getState().projectLoadStatus[projectId] === 'loading') return;
+        useRequestStore.getState().setProjectLoadStatus(projectId, 'loading');
+        try {
+            await Promise.all([
                 requestController.getCollections(projectId),
                 requestController.getRequests(projectId),
             ]);
+            useRequestStore.getState().setProjectLoadStatus(projectId, 'loaded');
+        } catch (error) {
+            console.error('Failed to load request list:', error);
+            useRequestStore.getState().setProjectLoadStatus(projectId, 'error');
         }
     }, [projectId]);
+
+    useEffect(() => {
+        if (!loadStatus) void loadProject();
+    }, [loadStatus, loadProject]);
 
     const handleImmediateCreateRequest = async (collectionId?: string) => {
         try {
@@ -140,6 +150,9 @@ export const Sidebar = ({ projectId, onSelectRequest, activeRequestId }: Sidebar
                 <SidebarList
                     requests={filteredRequests}
                     collections={collections}
+                    hasStoredItems={requests.length > 0 || collections.length > 0}
+                    loadStatus={loadStatus ?? 'loading'}
+                    onRetry={() => void loadProject()}
                     projectId={projectId}
                     activeRequestId={activeRequestId}
                     onSelectRequest={onSelectRequest}

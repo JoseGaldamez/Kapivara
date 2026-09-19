@@ -5,6 +5,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kapivara</title>
+  <script>
+    let initialTheme = 'auto';
+    try {
+      initialTheme = window.localStorage.getItem('kapivara.theme') || 'auto';
+    } catch {
+      // System preference remains available when storage is blocked.
+    }
+    document.documentElement.classList.add(initialTheme === 'dark' ||
+      (initialTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark' : 'light');
+  </script>
   <!-- Display typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -41,6 +41,10 @@ export interface SavedResponse {
     status_text: string;
     headers: string; // JSON string
     body?: string;
+    body_encoding?: 'text' | 'base64';
+    content_type?: string;
+    response_url?: string;
+    size_bytes?: number;
     time_ms: number;
     created_at?: string;
 }
@@ -50,6 +54,10 @@ export interface RequestResponse {
     status_text: string;
     headers: Record<string, string>;
     body: string;
+    body_encoding?: 'text' | 'base64';
+    content_type?: string;
+    response_url?: string;
+    size_bytes?: number;
     time_ms: number;
 }
 

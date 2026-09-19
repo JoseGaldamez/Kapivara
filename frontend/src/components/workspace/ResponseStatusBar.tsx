@@ -1,20 +1,21 @@
 import { RequestInfo } from "@/types";
-import { Copy, Check, ChevronsDown, ChevronsUp, Bookmark } from "lucide-react";
+import { Copy, Check, ChevronsDown, ChevronsUp, Bookmark, Maximize2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { isMediaResponse } from "./MediaResponseViewer";
 
 interface ResponseStatusBarProps {
     request: RequestInfo;
     isCollapsed?: boolean;
     onToggleCollapse?: () => void;
     onSaveResponse?: () => void;
+    onExpandResponse?: () => void;
 }
 
-const formatSize = (body?: string) => {
-    if (!body) return "0 B";
-    const bytes = new Blob([body]).size;
+const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
-    return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 export const ResponseStatusBar = ({
@@ -22,6 +23,7 @@ export const ResponseStatusBar = ({
     isCollapsed = false,
     onToggleCollapse,
     onSaveResponse,
+    onExpandResponse,
 }: ResponseStatusBarProps) => {
     const [isCopied, setIsCopied] = useState(false);
 
@@ -74,13 +76,24 @@ export const ResponseStatusBar = ({
                     <div className="flex items-center gap-2 text-xs font-mono text-[#8a7e72] dark:text-[#a89f91]">
                         <span>{request.response.time_ms} ms</span>
                         <span>•</span>
-                        <span>{formatSize(request.response.body)}</span>
+                        <span>{formatSize(request.response.size_bytes ?? new Blob([request.response.body]).size)}</span>
                     </div>
 
                     <div className="h-3.5 w-px bg-[#ded7ce]/80 dark:bg-white/10 mx-0.5" />
 
                     {/* Actions */}
                     <div className="flex items-center gap-1">
+                        {onExpandResponse && (
+                            <button
+                                type="button"
+                                onClick={onExpandResponse}
+                                className="text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                title="Expand response"
+                                aria-label="Expand response"
+                            >
+                                <Maximize2 size={14} />
+                            </button>
+                        )}
                         {onSaveResponse && (
                             <button
                                 onClick={onSaveResponse}
@@ -90,13 +103,13 @@ export const ResponseStatusBar = ({
                                 <Bookmark size={14} />
                             </button>
                         )}
-                        <button
+                        {!isMediaResponse(request.response) && <button
                             onClick={handleCopyResponse}
                             className="text-[#8a7e72] hover:text-[#1a1714] dark:text-[#a89f91] dark:hover:text-[#f4eadf] p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
                             title="Copy Response"
                         >
                             {isCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                        </button>
+                        </button>}
                         {onToggleCollapse ? (
                             <button
                                 onClick={onToggleCollapse}
